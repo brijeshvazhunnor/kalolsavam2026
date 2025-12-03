@@ -1,0 +1,4 @@
+Django>=4.2
+argon2-cffi # for stronger password hashing
+django-widget-tweaks # optional, for nicer form rendering
+python-dotenv # optional, to manage SECRET_KEY in .env

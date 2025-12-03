@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="container py-4" style="max-width: 700px;">
+    <div class="card shadow border-0">
+        <div class="card-header bg-warning text-dark fw-bold">
+            <i class="fas fa-edit me-2"></i>Edit Student Details
+        </div>
+
+        <div class="card-body p-4">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <label class="form-label fw-semibold">Student Name</label>
+                <input type="text" name="name" class="form-control mb-3" value="{{ student.name }}" required>
+
+                <label class="form-label fw-semibold">Admission / ID Number</label>
+                <input type="text" name="id_card" class="form-control mb-3" value="{{ student.id_card }}" required>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Date of Birth</label>
+                        <input type="date" name="date_of_birth" class="form-control mb-3" value="{{ student.date_of_birth|date:'Y-m-d' }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Department</label>
+                        <input type="text" name="department" class="form-control mb-3" value="{{ student.department }}" required>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Year of Joining</label>
+                        <input type="number" min="2000" max="2026" name="year_of_joining" class="form-control mb-3" value="{{ student.year_of_joining }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Current Year</label>
+                        <select name="current_year" class="form-select mb-3" required>
+                            {% for y in "12345" %}
+                                <option value="{{ forloop.counter }}" {% if student.current_year == forloop.counter %}selected{% endif %}>Year {{ forloop.counter }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <label class="form-label fw-semibold">Upload New ID Card (Optional)</label>
+                <input type="file" name="id_card_file" class="form-control mb-4" accept=".pdf,.jpg,.jpeg,.png">
+
+                {% if student.id_card_file %}
+                <p class="small text-muted">
+                    Current file:
+                    <a href="{{ student.id_card_file.url }}" target="_blank" class="fw-bold text-primary">
+                        View uploaded ID
+                    </a>
+                </p>
+                {% endif %}
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'register_student' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Kannur University Arts Fest</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #003366;
+            --secondary: #b8860b;
+            --accent: #8b0000;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --transition: all 0.3s ease;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+        }
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, #002244 100%);
+            color: white; padding: 15px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: sticky; top: 0; z-index: 1000;
+        }
+        .container { width: 90%; max-width: 1200px; margin: 0 auto; }
+        nav { display: flex; gap: 15px; }
+        .nav-btn {
+            background: rgba(255,255,255,0.1); color: white;
+            padding: 10px 20px; border-radius: 30px;
+            text-decoration: none; font-weight: 600;
+            transition: var(--transition); border: 2px solid transparent;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .nav-btn.active, .nav-btn:hover { background: var(--secondary); color: var(--primary); }
+        .login-dashboard {
+            display: flex; min-height: calc(100vh - 160px);
+            align-items: center; justify-content: center; padding: 40px 0;
+        }
+        .login-container {
+            display: flex; width: 100%; max-width: 1000px;
+            background: white; border-radius: 15px;
+            overflow: hidden; box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+        .login-left {
+            flex: 1; padding: 50px 40px; color: white;
+            background: linear-gradient(rgba(0,51,102,0.9), rgba(0,51,102,0.8));
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .login-right { flex: 1; padding: 50px 40px; display: flex; flex-direction: column; justify-content: center; }
+        .login-form .form-group { margin-bottom: 20px; }
+        .input-with-icon { position: relative; }
+        .input-with-icon input {
+            width: 100%; padding: 15px 15px 15px 45px;
+            border: 2px solid #e1e5ee; border-radius: 8px;
+        }
+        .input-with-icon i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); }
+        .password-toggle { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; }
+        .login-btn {
+            width: 100%; background: var(--primary); color: white;
+            border: none; padding: 15px; border-radius: 8px;
+            font-size: 1.1rem; font-weight: 600; cursor: pointer;
+        }
+        .login-btn:hover { background: #002244; }
+        footer {
+            background: linear-gradient(135deg, var(--primary) 0%, #002244 100%);
+            color: white; padding: 30px 0; text-align: center; margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="container header-content">
+        <div class="logo-container">
+            <img class="logo" height="60" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='80'><rect width='200' height='80' rx='10' fill='%23ffffff'/><text x='100' y='45' font-family='Arial' font-size='24' font-weight='bold' text-anchor='middle' fill='%23003366'>KU ARTS FEST</text></svg>">
+        </div>
+        <nav>
+            <a href="/" class="nav-btn"><i class="fas fa-home"></i> <span>Home</span></a>
+            <a href="{% url 'login' %}" class="nav-btn active"><i class="fas fa-sign-in-alt"></i> <span>Login</span></a>
+        </nav>
+    </div>
+</header>
+
+<section class="login-dashboard">
+    <div class="container">
+        <div class="login-container">
+            <div class="login-left">
+                <h2>Welcome to Kannur University Arts Fest</h2>
+                <p>Login to manage registrations and competitions.</p>
+            </div>
+
+            <div class="login-right">
+                <div class="login-header">
+                    <h2>Sign In</h2>
+                </div>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <p style="color:red; text-align:center;">{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
+
+                <!-- 🔥 REAL DJANGO FORM SUBMIT -->
+                <form class="login-form" id="loginForm" method="POST" action="{% url 'login' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                            <span class="password-toggle" id="passwordToggle"><i class="far fa-eye"></i></span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="login-btn">Sign In</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <p>© 2025 Kannur University Arts Fest</p>
+</footer>
+
+<script>
+    // Password visibility toggle
+    const toggle = document.getElementById('passwordToggle');
+    const pass = document.getElementById('password');
+    toggle.addEventListener('click', () => {
+        pass.type = pass.type === "password" ? "text" : "password";
+        toggle.querySelector('i').classList.toggle("fa-eye-slash");
+    });
+</script>
+
+</body>
+</html>

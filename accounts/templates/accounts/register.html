@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid py-4 college-dashboard">
+    <div class="row">
+
+        <!-- Sidebar -->
+        <div class="col-lg-3 col-md-4 mb-4">
+            <div class="card sidebar-card shadow border-0 h-100">
+                <div class="gradient-header text-white p-4 text-center rounded-top">
+                    <i class="fas fa-university fa-3x mb-3 text-white-50"></i>
+                    <h5 class="fw-bold mb-1">{{ user.first_name|default:user.username }}</h5>
+                    <p class="small opacity-75 mb-0">College Administrator</p>
+                </div>
+
+                <div class="p-3">
+                    <ul class="nav nav-pills flex-column">
+
+                        <!-- <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/college/dashboard/' %}active{% endif %}"
+                               href="{% url 'college_dashboard' %}">
+                                <i class="fas fa-home me-2"></i>Dashboard
+                            </a>
+                        </li> -->
+
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/college/register-student/' %}active{% endif %}"
+                               href="{% url 'register_student' %}">
+                                <i class="fas fa-user-plus me-2"></i>Register Students
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/team/create/' %}active{% endif %}"
+                               href="{% url 'team_creation' %}">
+                                <i class="fas fa-users me-2"></i>Create Teams
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-list me-2"></i>Student List
+                            </a>
+                        </li>
+
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="col-lg-9 col-md-8">
+
+            <!-- Header -->
+            <div class="main-header mb-4 p-4 rounded shadow-sm">
+                <div>
+                    <h2 class="h4 fw-bold text-dark mb-1">
+                        <i class="fas fa-user-plus me-2 text-primary"></i>Student Registration
+                    </h2>
+                    <p class="text-muted mb-0">Add students from your college to participate in events</p>
+                </div>
+                <div>
+                    <a href="{% url 'team_creation' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-users me-2"></i>Create Teams
+                    </a>
+                </div>
+            </div>
+
+            <!-- Flash Messages {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %} -->
+            
+
+            <!-- Welcome -->
+            <div class="alert alert-info shadow-sm mb-4 fw-semibold">
+                👋 Welcome, <span class="text-primary">{{ user.college_name }}</span>
+            </div>
+
+            <div class="row g-4">
+
+                <!-- Registration Form -->
+                <div class="col-lg-6 col-md-12">
+                    <div class="card shadow border-0 h-100">
+                        <div class="card-header text-white fw-bold" style="background: linear-gradient(135deg,#4c00ff,#3700b3);">
+                            <i class="fas fa-user-plus me-2"></i>Register New Student
+                        </div>
+
+                        <div class="card-body p-4">
+                            <form method="POST" enctype="multipart/form-data" action="{% url 'register_student' %}">
+                                {% csrf_token %}
+
+                                <label class="form-label fw-semibold">Student Name</label>
+                                <input type="text" name="name" class="form-control mb-3" required>
+
+                                <label class="form-label fw-semibold">Admission / ID Number</label>
+                                <input type="text" name="id_card" class="form-control mb-3" required>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Date of Birth</label>
+                                        <input type="date" name="date_of_birth" class="form-control mb-3" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Department</label>
+                                        <input type="text" name="department" class="form-control mb-3" required>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Year of Joining</label>
+                                        <input type="number" name="year_of_joining" class="form-control mb-3"
+                                            min="2000" max="2026" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Current Year</label>
+                                        <select name="current_year" class="form-select mb-3" required>
+                                            <option value="">Select Year</option>
+                                            <option>1</option><option>2</option>
+                                            <option>3</option><option>4</option><option>5</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <label class="form-label fw-semibold">Upload ID Card (Optional)</label>
+                                <input type="file" name="id_card_file" class="form-control mb-4"
+                                    accept=".pdf,.jpg,.jpeg,.png">
+
+                                <button type="submit" class="btn btn-primary w-100"
+                                    style="background: linear-gradient(135deg,#4c00ff,#3700b3);">
+                                    <i class="fas fa-user-plus me-2"></i>Register Student
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student List -->
+                <div class="col-lg-6 col-md-12">
+                    <div class="card shadow border-0 h-100">
+                        <div class="card-header bg-secondary text-white fw-bold">
+                            <i class="fas fa-users me-2"></i>Registered Students
+                            <span class="badge bg-light text-dark float-end">{{ students|length }}</span>
+                        </div>
+
+                        <div class="card-body p-0">
+
+                            {% if students %}
+                            <!-- Scrollable Student List -->
+                            <div style="max-height: 480px; overflow-y: auto;">
+                                <table class="table align-middle table-hover mb-0">
+                                    <tbody>
+                                    {% for s in students %}
+                                        <tr>
+                                            <td class="ps-4">
+                                                <strong>{{ s.name }}</strong><br>
+                                                <small class="text-muted">{{ s.department }}</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">Year {{ s.current_year }}</span>
+                                            </td>
+                                            <td align="right" class="pe-4">
+                                                <div class="btn-group">
+                                                    {% if s.id_card_file %}
+                                                    <a class="btn btn-outline-info btn-sm" href="{{ s.id_card_file.url }}" target="_blank">
+                                                        <i class="fas fa-file"></i>
+                                                    </a>
+                                                    {% endif %}
+                                                    <a href="{% url 'edit_student' s.id %}" class="btn btn-outline-warning btn-sm">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-center py-4 text-muted">No students yet.</p>
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
