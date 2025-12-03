@@ -168,23 +168,31 @@ def edit_student(request, student_id):
 
 
 # ---------------- Create Team ----------------
+@login_required
 def team_creation(request):
     college = College.objects.get(username=request.user.username)
     students = Student.objects.filter(college=college)
     items = Item.objects.all()
 
-    # extract distinct category list
-    categories = Item.objects.values_list("category", flat=True).distinct()
+    if request.method == "POST":
+        item_id = request.POST.get("item")
+        selected_students = request.POST.getlist("students")
+        item = Item.objects.get(id=item_id)
 
-    teams = Team.objects.filter(college=college).select_related("item").prefetch_related("students")
+        if Team.objects.filter(college=college, item=item).exists():
+            messages.error(request, f"You already created a team for {item.name}.")
+            return redirect("team_creation")
 
-    return render(request, "team/create_team.html", {
-        "students": students,
-        "items": items,
-        "categories": categories,
-        "teams": teams,
-    })
+        if len(selected_students) > item.max_participants:
+            messages.error(request, f"{item.max_participants} participants allowed.")
+            return redirect("team_creation")
 
+        team = Team.objects.create(college=college, item=item, category=item.category)
+        team.students.set(selected_students)
+        messages.success(request, "Team created successfully!")
+        return redirect("team_creation")
+
+    return render(request, "team/create_team.html", {"students": students, "items": items})
 
 
 
