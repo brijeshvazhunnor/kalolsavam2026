@@ -168,31 +168,133 @@ def edit_student(request, student_id):
 
 
 # ---------------- Create Team ----------------
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+
+from .models import College, Student, Item, Team
+
+
 @login_required
 def team_creation(request):
-    college = College.objects.get(username=request.user.username)
-    students = Student.objects.filter(college=college)
-    items = Item.objects.all()
+    # Only colleges can access
+    if request.user.role != "college":
+        messages.error(request, "Only college users can create teams.")
+        return redirect("home")
+
+    college = get_object_or_404(College, username=request.user.username)
+
+    students = Student.objects.filter(college=college).order_by("name")
+    items = Item.objects.all().order_by("category", "name")
+    categories = Item.objects.values_list('category', flat=True).distinct().order_by('category')
+
+    # for front-end: which items already have a team for this college
+    existing_item_ids = list(
+        Team.objects.filter(college=college).values_list("item_id", flat=True)
+    )
 
     if request.method == "POST":
         item_id = request.POST.get("item")
         selected_students = request.POST.getlist("students")
-        item = Item.objects.get(id=item_id)
 
+        if not item_id:
+            messages.error(request, "Please select an event item.")
+            return redirect("team_creation")
+
+        item = get_object_or_404(Item, id=item_id)
+
+        # Check if team already exists for this item
         if Team.objects.filter(college=college, item=item).exists():
-            messages.error(request, f"You already created a team for {item.name}.")
+            messages.error(
+                request,
+                f"You have already created a team for '{item.name}'. You can edit it below."
+            )
+            return redirect("team_creation")
+
+        if not selected_students:
+            messages.error(request, "Please select at least one student.")
             return redirect("team_creation")
 
         if len(selected_students) > item.max_participants:
-            messages.error(request, f"{item.max_participants} participants allowed.")
+            messages.error(
+                request,
+                f"Maximum {item.max_participants} participants are allowed for '{item.name}'."
+            )
             return redirect("team_creation")
 
-        team = Team.objects.create(college=college, item=item, category=item.category)
+        team = Team.objects.create(
+            college=college,
+            item=item,
+            category=item.category
+        )
         team.students.set(selected_students)
-        messages.success(request, "Team created successfully!")
+        messages.success(request, f"Team for '{item.name}' created successfully.")
         return redirect("team_creation")
 
-    return render(request, "team/create_team.html", {"students": students, "items": items})
+    teams = (
+        Team.objects.filter(college=college)
+        .select_related("item")
+        .prefetch_related("students")
+        .order_by("item__category", "item__name")
+    )
+
+    context = {
+        "students": students,
+        "items": items,
+        "categories": categories,
+        "teams": teams,
+        "existing_item_ids": existing_item_ids,
+    }
+    return render(request, "team/create_team.html", context)
+
+
+from django.contrib import messages
+from django.shortcuts import redirect, get_object_or_404
+
+@login_required
+def delete_team(request, team_id):
+    team = get_object_or_404(Team, id=team_id)
+
+    if team.college.username != request.user.username:
+        messages.error(request, "You are not allowed to delete this team.")
+        return redirect("team_creation")
+
+    team.delete()
+    messages.success(request, "Team deleted successfully.")
+    return redirect("team_creation")
+
+
+
+@login_required
+def edit_team(request, team_id):
+    if request.user.role != "college":
+        messages.error(request, "Only college users can edit teams.")
+        return redirect("home")
+
+    college = get_object_or_404(College, username=request.user.username)
+    team = get_object_or_404(Team, id=team_id, college=college)
+    item = team.item
+
+    if request.method == "POST":
+        selected_students = request.POST.getlist("edit_students")
+
+        if not selected_students:
+            messages.error(request, "A team must have at least one participant.")
+            return redirect("team_creation")
+
+        if len(selected_students) > item.max_participants:
+            messages.error(
+                request,
+                f"Maximum {item.max_participants} participants are allowed for '{item.name}'."
+            )
+            return redirect("team_creation")
+
+        team.students.set(selected_students)
+        messages.success(request, f"Team for '{item.name}' updated successfully.")
+        return redirect("team_creation")
+
+    return redirect("team_creation")
+
 
 
 

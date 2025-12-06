@@ -1,460 +1,481 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load widget_tweaks %}
 
 {% block content %}
 
-<div class="container-fluid py-4 college-dashboard">
+<div class="container-fluid py-4">
     <div class="row">
-        <!-- Sidebar (Optional - can be removed since we have dropdown) -->
-        <div class="col-lg-3 col-md-4 mb-4 d-none d-lg-block">
-            <div class="card sidebar-card shadow border-0 h-100">
+
+        <!-- SIDEBAR -->
+        <div class="col-lg-3 d-none d-lg-block">
+            <div class="card shadow border-0 h-100">
                 <div class="gradient-header text-white p-4 text-center rounded-top">
                     <i class="fas fa-university fa-3x mb-2 text-white-50"></i>
-                    <h5 class="fw-bold mb-1">{{ user.first_name|default:user.username }}</h5>
-                    <p class="small opacity-75 mb-0">College Administrator</p>
+                    <h5 class="fw-bold">{{ user.username }}</h5>
+                    <p class="small opacity-75">College Administrator</p>
                 </div>
-
                 <div class="p-3">
-                    <ul class="nav nav-pills flex-column">
+                    <ul class="nav flex-column nav-pills">
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'college_dashboard' %}">
                                 <i class="fas fa-home me-2"></i>Dashboard
                             </a>
                         </li>
-
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'register_student' %}">
                                 <i class="fas fa-user-plus me-2"></i>Register Students
                             </a>
                         </li>
-
                         <li class="nav-item">
                             <a class="nav-link active" href="{% url 'team_creation' %}">
                                 <i class="fas fa-users me-2"></i>Create Teams
                             </a>
                         </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-list me-2"></i>Student List
-                            </a>
-                        </li>
                     </ul>
-
-                    <hr class="my-3">
-                    <a class="nav-link logout-btn text-danger" href="{% url 'logout' %}">
+                    <hr>
+                    <a class="nav-link text-danger" href="{% url 'logout' %}">
                         <i class="fas fa-sign-out-alt me-2"></i>Logout
                     </a>
                 </div>
             </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="col-lg-9 col-md-12">
-            <!-- Page Header -->
-            <div class="main-header mb-4 p-4">
+        <!-- MAIN CONTENT -->
+        <div class="col-lg-9">
+
+            <!-- PAGE HEADER -->
+            <div class="main-header p-4 mb-3 shadow-sm bg-white rounded d-flex justify-content-between align-items-center">
                 <div>
-                    <h2 class="h4 fw-bold text-dark mb-1">
+                    <h4 class="mb-1 fw-bold">
                         <i class="fas fa-users me-2 text-primary"></i>Create Team
-                    </h2>
-                    <p class="text-muted mb-0">Select item and assign participants from your college</p>
+                    </h4>
+                    <p class="mb-0 text-muted">Select category → event → participants</p>
                 </div>
-                <div class="d-flex gap-2">
-                    <!-- Dashboard Navigation -->
-                    <a href="{% url 'college_dashboard' %}" class="btn btn-outline-secondary">
-                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                    </a>
-                    <!-- Register Students Navigation -->
-                    <a href="{% url 'register_student' %}" class="btn btn-outline-primary">
+                <div>
+                    <a href="{% url 'register_student' %}" class="btn btn-outline-primary btn-sm">
                         <i class="fas fa-user-plus me-2"></i>Register Students
                     </a>
                 </div>
             </div>
 
-            <!-- Welcome Message -->
-            {% if user.is_authenticated %}
-            <div class="alert alert-info shadow-sm mb-4 d-flex align-items-center">
-                <i class="fas fa-hand-wave me-3 fa-lg"></i>
-                <div>
-                    <strong>Welcome, {{ user.college_name }}!</strong> 
-                    <span class="d-block text-muted small">You can create teams for various events below.</span>
-                </div>
-            </div>
-            {% endif %}
+            <!-- POPUP MESSAGES -->
+            
 
-            <!-- Team Creation Form Card -->
+            <!-- TEAM CREATION CARD -->
             <div class="card shadow border-0 mb-4">
-                <div class="card-header bg-primary text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 fw-bold">
-                            <i class="fas fa-edit me-2"></i>Team Formation
-                        </h5>
-                        <span class="badge bg-light text-primary">
-                            Step 1 of 2
-                        </span>
-                    </div>
+                <div class="card-header bg-primary text-white fw-bold">
+                    <i class="fas fa-edit me-2"></i>Team Formation
                 </div>
-
                 <div class="card-body p-4">
+
                     <form method="POST" id="teamForm">
                         {% csrf_token %}
 
-                        <!-- Item Selection -->
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold text-dark mb-2">
-                                <i class="fas fa-trophy me-1"></i>Select Event Item *
-                            </label>
-                            <select name="item" class="form-select form-select-lg shadow-sm" required onchange="updateLimits(this)">
-                                <option value="">-- Choose an item --</option>
-                                {% for item in items %}
-                                <option value="{{ item.id }}" 
-                                    data-max="{{ item.max_participants }}" 
-                                    data-cat="{{ item.category }}">
-                                    {{ item.name }} ({{ item.category }})
-                                </option>
+                        <!-- CATEGORY -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Select Category *</label>
+                            <select id="category-select" class="form-select" required>
+                                <option value="">-- Select Category --</option>
+                                {% for c in categories %}
+                                    <option value="{{ c }}">{{ c }}</option>
                                 {% endfor %}
                             </select>
-                            <div class="form-text text-muted mt-1">
-                                Select the competition item for which you're creating a team
+                        </div>
+
+                        <!-- EVENT ITEM -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Select Event Item *</label>
+                            <select id="item-select" name="item" class="form-select" required disabled>
+                                <option value="">-- Select Category First --</option>
+                                {% for item in items %}
+                                    <option value="{{ item.id }}"
+                                            data-cat="{{ item.category }}"
+                                            data-max="{{ item.max_participants }}">
+                                        {{ item.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div id="item-info" class="mt-2"></div>
+                        </div>
+
+                        <!-- STUDENT SEARCH -->
+                        <div class="mb-2 d-flex justify-content-between align-items-center">
+                            <label class="form-label fw-semibold mb-0">Select Participants</label>
+                            <input type="text" id="student-search" class="form-control form-control-sm"
+                                   style="max-width: 260px;" placeholder="Search by name or department">
+                        </div>
+
+                        <!-- SELECTION COUNTER -->
+                        <div id="selection-counter" class="alert alert-secondary mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            No students selected
+                        </div>
+
+                        <!-- STUDENT LIST -->
+                        <div class="student-list p-3">
+                            <div class="row" id="student-list-wrapper">
+                                {% for s in students %}
+                                <div class="col-md-6 mb-2 student-wrapper">
+                                    <label class="form-check student-card p-2 rounded w-100"
+                                           data-name="{{ s.name|lower }} {{ s.department|lower }}">
+                                        <input class="form-check-input student-checkbox" type="checkbox"
+                                               name="students" value="{{ s.id }}">
+                                        <span>
+                                            <strong>{{ s.name }}</strong><br>
+                                            <small class="text-muted">
+                                                {{ s.department }} • Year {{ s.current_year }}
+                                            </small>
+                                        </span>
+                                    </label>
+                                </div>
+                                {% endfor %}
                             </div>
                         </div>
 
-                        <!-- Item Information Display -->
-                        <div id="item-info"></div>
-
-                        <!-- Student Selection -->
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold text-dark mb-2">
-                                <i class="fas fa-user-graduate me-1"></i>Select Participants
-                            </label>
-                            
-                            <!-- Selection Counter -->
-                            <div id="selection-counter" class="alert alert-secondary mb-3">
-                                <i class="fas fa-info-circle me-2"></i>
-                                No students selected yet
-                            </div>
-
-                            <!-- Students List -->
-                            <div class="student-selection p-3">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h6 class="fw-semibold text-muted mb-0">
-                                        <i class="fas fa-list me-2"></i>Available Students
-                                    </h6>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAllStudents()">
-                                        <i class="fas fa-check-square me-1"></i>Select All
-                                    </button>
-                                </div>
-                                
-                                {% if students %}
-                                <div class="row">
-                                    {% for student in students %}
-                                    <div class="col-md-6 mb-2">
-                                        <div class="form-check student-card p-2 rounded">
-                                            <input class="form-check-input student-checkbox" type="checkbox" 
-                                                   name="students" value="{{ student.id }}" 
-                                                   id="student_{{ student.id }}">
-                                            <label class="form-check-label w-100" for="student_{{ student.id }}">
-                                                <div class="d-flex align-items-center">
-                                                    <div class="me-3">
-                                                        <i class="fas fa-user-circle fa-lg text-primary"></i>
-                                                    </div>
-                                                    <div>
-                                                        <strong class="d-block">{{ student.name }}</strong>
-                                                        <small class="text-muted">
-                                                            {{ student.department }} • Year {{ student.current_year }}
-                                                        </small>
-                                                    </div>
-                                                </div>
-                                            </label>
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                                {% else %}
-                                <div class="text-center py-4 empty-state">
-                                    <i class="fas fa-user-graduate fa-3x text-muted mb-3"></i>
-                                    <h5 class="text-muted">No Students Available</h5>
-                                    <p class="text-muted">Please register students first to create teams.</p>
-                                    <a href="{% url 'register_student' %}" class="btn btn-primary mt-2">
-                                        <i class="fas fa-user-plus me-2"></i>Register Students
-                                    </a>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Submit Button -->
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4 pt-3 border-top">
-                            <a href="{% url 'college_dashboard' %}" class="btn btn-outline-secondary me-2">
-                                <i class="fas fa-times me-2"></i>Cancel
-                            </a>
-                            <button type="submit" class="btn btn-primary px-4" id="submitBtn">
-                                <i class="fas fa-check-circle me-2"></i>Create Team
-                            </button>
-                        </div>
+                        <button type="submit" id="submitBtn" class="btn btn-primary w-100 mt-4">
+                            <i class="fas fa-check-circle me-2"></i>Create Team
+                        </button>
                     </form>
                 </div>
             </div>
+
+            <!-- TEAM LIST CARD -->
+            <div class="card shadow border-0">
+                <div class="card-header bg-success text-white fw-bold">
+                    <i class="fas fa-list me-2"></i>Your Created Teams
+                </div>
+                <div class="card-body p-0">
+                    {% if teams %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Category</th>
+                                    <th>Participants</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for t in teams %}
+                                <tr>
+                                    <td>{{ t.item.name }}</td>
+                                    <td>{{ t.category }}</td>
+                                    <td>{{ t.students.count }}</td>
+                                    <td class="text-end pe-3">
+                                        <button class="btn btn-sm btn-outline-primary"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editTeamModal{{ t.id }}">
+                                            <i class="fas fa-pencil-alt me-1"></i>Edit Team
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                        <p class="text-muted text-center py-4 mb-0">
+                            No teams created yet. Create your first team above.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
+
+<!-- EDIT TEAM MODALS -->
+{% if teams %}
+    {% for t in teams %}
+    <div class="modal fade edit-team-modal" id="editTeamModal{{ t.id }}" tabindex="-1" aria-hidden="true"
+         data-max="{{ t.item.max_participants }}">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <form method="POST" action="{% url 'edit_team' t.id %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            Edit Team – {{ t.item.name }} (Max: {{ t.item.max_participants }})
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+
+                        <p class="small text-muted mb-2">
+                            Category: <strong>{{ t.category }}</strong>
+                        </p>
+
+                        <div class="alert alert-secondary modal-counter mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <span class="modal-selection-info">Updating…</span>
+                        </div>
+
+                        <div class="row">
+                            {% for s in students %}
+                            <div class="col-md-6 mb-2">
+                                <label class="form-check student-card p-2 rounded w-100">
+                                    <input class="form-check-input modal-student-checkbox"
+                                           type="checkbox"
+                                           name="edit_students"
+                                           value="{{ s.id }}"
+                                           {% if s in t.students.all %}checked{% endif %}>
+                                    <span>
+                                        <strong>{{ s.name }}</strong><br>
+                                        <small class="text-muted">
+                                            {{ s.department }} • Year {{ s.current_year }}
+                                        </small>
+                                    </span>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                    </div>
+                    <div class="modal-footer d-flex justify-content-between">
+
+                    <!-- DELETE BTN -->
+                    <button type="button"
+                            class="btn btn-danger"
+                            onclick="confirmDeleteTeam({{ t.id }})">
+                        <i class="fas fa-trash-alt me-1"></i> Delete Team
+                    </button>
+
+                    <div>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            Close
+                        </button>
+                        <button type="submit" class="btn btn-primary modal-save-btn">
+                            Save Changes
+                        </button>
+                    </div>
+
+                </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function updateLimits(selectElement) {
-    const max = selectElement.options[selectElement.selectedIndex].getAttribute("data-max");
-    const cat = selectElement.options[selectElement.selectedIndex].getAttribute("data-cat");
-    const infoDiv = document.getElementById("item-info");
-    
-    if (max && cat) {
-        infoDiv.innerHTML = `
-            <div class="alert alert-info alert-dismissible fade show" role="alert">
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-info-circle fa-lg me-3"></i>
-                    <div>
-                        <h6 class="mb-1 fw-bold">${cat}</h6>
-                        <p class="mb-0">
-                            Maximum participants allowed: <span class="badge bg-primary">${max}</span><br>
-                            <small class="text-muted">Select ${max} or fewer students for this item</small>
-                        </p>
-                    </div>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-        updateCounter(); // Update counter with new max
-    } else {
-        infoDiv.innerHTML = '';
+// ----- existing teams (for quick warning when selecting an item) -----
+const existingTeams = new Set(
+    JSON.parse(`[{% for id in existing_item_ids %}{{ id }}{% if not forloop.last %},{% endif %}{% endfor %}]`)
+);
+
+function confirmDeleteTeam(teamId) {
+    if (confirm("Are you sure you want to delete this team? This action cannot be undone.")) {
+        window.location.href = `/team/delete/${teamId}/`;
     }
 }
 
-// Select all students function
-function selectAllStudents() {
-    const checkboxes = document.querySelectorAll('.student-checkbox');
-    const max = document.querySelector('select[name="item"]')?.options[
-        document.querySelector('select[name="item"]').selectedIndex
-    ]?.getAttribute("data-max") || 0;
-    
-    if (max > 0 && checkboxes.length > max) {
-        alert(`You can only select a maximum of ${max} students for this item.`);
-        return;
-    }
-    
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = true;
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    const categorySelect   = document.getElementById("category-select");
+    const itemSelect       = document.getElementById("item-select");
+    const itemInfo         = document.getElementById("item-info");
+    const searchInput      = document.getElementById("student-search");
+    const studentCards     = document.querySelectorAll(".student-card");
+    const studentCheckboxes = document.querySelectorAll(".student-checkbox");
+    const selectionCounter = document.getElementById("selection-counter");
+    const submitBtn        = document.getElementById("submitBtn");
+    const teamForm         = document.getElementById("teamForm");
+
+    // ---- CATEGORY FILTER ----
+    categorySelect.addEventListener("change", function () {
+        const cat = this.value;
+        itemSelect.disabled = (cat === "");
+        itemSelect.value = "";
+        itemInfo.innerHTML = "";
+        updateCounter();
+
+        const options = itemSelect.querySelectorAll("option");
+        options.forEach(opt => {
+            if (!opt.value) return; // skip placeholder
+            opt.style.display = (opt.dataset.cat === cat) ? "block" : "none";
+        });
     });
-    updateCounter();
-}
 
-// Student selection counter
-document.addEventListener('DOMContentLoaded', function() {
-    const checkboxes = document.querySelectorAll('.student-checkbox');
-    const itemSelect = document.querySelector('select[name="item"]');
-    const submitBtn = document.getElementById('submitBtn');
-    const form = document.getElementById('teamForm');
-    
-    function updateCounter() {
-        const selected = document.querySelectorAll('.student-checkbox:checked').length;
-        const max = itemSelect?.options[itemSelect.selectedIndex]?.getAttribute("data-max") || 0;
-        const counter = document.getElementById('selection-counter');
-        
-        if (!counter) return;
-        
-        if (max > 0) {
-            counter.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <i class="fas fa-users me-2"></i>
-                        Selected: <strong>${selected}</strong> / ${max} students
-                    </div>
-                    <div>
-                        <span class="badge ${selected > max ? 'bg-danger' : selected == max ? 'bg-success' : 'bg-primary'}">
-                            ${selected > max ? 'Exceeded' : selected == max ? 'Complete' : 'Incomplete'}
-                        </span>
-                    </div>
+    // ---- ITEM CHANGE (MAX + ALREADY TEAM) ----
+    itemSelect.addEventListener("change", function () {
+        const selectedOpt = this.options[this.selectedIndex];
+        if (!selectedOpt || !selectedOpt.value) {
+            itemInfo.innerHTML = "";
+            updateCounter();
+            return;
+        }
+
+        const max = selectedOpt.dataset.max;
+        const itemId = parseInt(selectedOpt.value);
+        let warnHtml = "";
+
+        if (existingTeams.has(itemId)) {
+            warnHtml = `
+                <div class="alert alert-warning mb-2">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    You already have a team for this item. You can edit it in the "Your Created Teams" section below.
                 </div>
             `;
-            
-            if (selected > max) {
-                counter.className = 'alert alert-danger';
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Too Many Students';
-            } else if (selected == max && selected > 0) {
-                counter.className = 'alert alert-success';
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Create Team';
-            } else if (selected > 0) {
-                counter.className = 'alert alert-primary';
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Create Team';
-            } else {
-                counter.className = 'alert alert-secondary';
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-user-slash me-2"></i>Select Students';
-            }
-        } else {
-            counter.innerHTML = '<i class="fas fa-info-circle me-2"></i>Please select an item first';
-            counter.className = 'alert alert-secondary';
+        }
+
+        itemInfo.innerHTML = `
+            ${warnHtml}
+            <div class="alert alert-info mb-0">
+                <i class="fas fa-users me-2"></i>
+                Maximum participants allowed: <strong>${max}</strong>
+            </div>
+        `;
+        updateCounter();
+    });
+
+    // ---- SEARCH AS YOU TYPE ----
+    if (searchInput) {
+        searchInput.addEventListener("input", function () {
+            const q = this.value.toLowerCase().trim();
+            document.querySelectorAll(".student-wrapper").forEach(wrapper => {
+                const nameData = wrapper.querySelector(".student-card").dataset.name;
+                if (!q || nameData.includes(q)) {
+                    wrapper.style.display = "";
+                } else {
+                    wrapper.style.display = "none";
+                }
+            });
+        });
+    }
+
+    // ---- SELECTION COUNTER FOR CREATE FORM ----
+    function updateCounter() {
+        const selected = document.querySelectorAll(".student-checkbox:checked").length;
+        const selectedOpt = itemSelect.options[itemSelect.selectedIndex];
+        const max = selectedOpt && selectedOpt.dataset.max ? parseInt(selectedOpt.dataset.max) : 0;
+
+        if (!max) {
+            selectionCounter.className = "alert alert-secondary mb-3";
+            selectionCounter.innerHTML = `
+                <i class="fas fa-info-circle me-2"></i>
+                Select a category and event item first
+            `;
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Select Item First';
+            return;
+        }
+
+        selectionCounter.innerHTML = `
+            <i class="fas fa-users me-2"></i>
+            Selected: <strong>${selected}</strong> / ${max}
+        `;
+        if (selected === 0) {
+            selectionCounter.className = "alert alert-secondary mb-3";
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-user-slash me-2"></i>Select Students';
+        } else if (selected > max) {
+            selectionCounter.className = "alert alert-danger mb-3";
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Too Many Students';
+        } else if (selected === max) {
+            selectionCounter.className = "alert alert-success mb-3";
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Create Team';
+        } else {
+            selectionCounter.className = "alert alert-primary mb-3";
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Create Team';
         }
     }
-    
-    // Form submission validation
-    form.addEventListener('submit', function(e) {
-        const selected = document.querySelectorAll('.student-checkbox:checked').length;
-        const max = itemSelect?.options[itemSelect.selectedIndex]?.getAttribute("data-max") || 0;
-        const itemValue = itemSelect?.value;
-        
+
+    studentCheckboxes.forEach(cb => cb.addEventListener("change", updateCounter));
+    updateCounter();
+
+    // ---- FORM SUBMIT VALIDATION (BACKUP) ----
+    teamForm.addEventListener("submit", function (e) {
+        const itemValue = itemSelect.value;
+        const selected = document.querySelectorAll(".student-checkbox:checked").length;
+        const selectedOpt = itemSelect.options[itemSelect.selectedIndex];
+        const max = selectedOpt && selectedOpt.dataset.max ? parseInt(selectedOpt.dataset.max) : 0;
+
         if (!itemValue) {
             e.preventDefault();
-            alert('Please select an item first.');
+            alert("Please select an event item.");
             itemSelect.focus();
             return false;
         }
-        
         if (selected === 0) {
             e.preventDefault();
-            alert('Please select at least one student.');
+            alert("Please select at least one student.");
             return false;
         }
-        
-        if (selected > max) {
+        if (max && selected > max) {
             e.preventDefault();
-            alert(`You can only select a maximum of ${max} students for this item.`);
+            alert(`You can select at most ${max} students for this item.`);
             return false;
         }
-        
-        // Show loading state
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating Team...';
     });
-    
-    // Initialize event listeners
-    checkboxes.forEach(cb => {
-        cb.addEventListener('change', updateCounter);
-    });
-    
-    if (itemSelect) {
-        itemSelect.addEventListener('change', updateCounter);
-    }
-    
-    // Initialize counter
-    updateCounter();
-});
 
-// Clear browser history for sensitive pages
-history.pushState(null, null, location.href);
-window.onpopstate = function () {
-    history.go(1);
-};
+    // ---- EDIT TEAM MODALS (SEPARATE LOGIC, NO FLICKER) ----
+    document.querySelectorAll(".edit-team-modal").forEach(modal => {
+        const max = parseInt(modal.dataset.max || "0");
+        const checkboxes = modal.querySelectorAll(".modal-student-checkbox");
+        const counterBox = modal.querySelector(".modal-counter");
+        const infoSpan = modal.querySelector(".modal-selection-info");
+        const saveBtn = modal.querySelector(".modal-save-btn");
+
+        function updateModalCounter() {
+            const selected = modal.querySelectorAll(".modal-student-checkbox:checked").length;
+
+            infoSpan.textContent = `Selected ${selected} / ${max}`;
+            if (selected === 0) {
+                counterBox.className = "alert alert-secondary modal-counter mb-3";
+                saveBtn.disabled = true;
+            } else if (selected > max) {
+                counterBox.className = "alert alert-danger modal-counter mb-3";
+                saveBtn.disabled = true;
+            } else if (selected === max) {
+                counterBox.className = "alert alert-success modal-counter mb-3";
+                saveBtn.disabled = false;
+            } else {
+                counterBox.className = "alert alert-primary modal-counter mb-3";
+                saveBtn.disabled = false;
+            }
+        }
+
+        checkboxes.forEach(cb => cb.addEventListener("change", updateModalCounter));
+        updateModalCounter();
+    });
+});
 </script>
 
 <style>
-/* Custom Styles for Team Creation Page */
-.student-card {
-    transition: all 0.2s ease;
-    border: 1px solid transparent;
-    cursor: pointer;
-}
-
-.student-card:hover {
-    background-color: rgba(13, 110, 253, 0.05);
-    border-color: rgba(13, 110, 253, 0.2);
-    transform: translateY(-1px);
-}
-
-.student-card .form-check-input:checked {
-    background-color: var(--primary);
-    border-color: var(--primary);
-}
-
-.student-card .form-check-input:checked + .form-check-label {
-    color: var(--primary-dark);
-}
-
-.form-select-lg {
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    border-radius: 8px;
-}
-
 .main-header {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    border-left: 5px solid var(--primary);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    border-left: 4px solid #0d6efd;
 }
-
-.student-selection {
+.student-card {
+    border: 1px solid #eee;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.student-card:hover {
+    background: #f5f8ff;
+    border-color: #a9c9ff;
+}
+.student-list {
     border: 2px solid #e9ecef;
     border-radius: 10px;
-    transition: border-color 0.3s ease;
-    background: #fdfdfd;
+    max-height: 380px;
+    overflow-y: auto;
+    background: #fbfbfb;
 }
-
-.alert-info {
-    border-left: 4px solid var(--primary);
-    background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
-}
-
-.card-header {
-    border-radius: 10px 10px 0 0 !important;
-}
-
-.btn-outline-secondary {
-    border-color: #dee2e6;
-    color: #6c757d;
-}
-
-.btn-outline-secondary:hover {
-    background-color: #6c757d;
-    border-color: #6c757d;
-    color: white;
-}
-
-.btn-outline-primary:hover {
-    background-color: var(--primary);
-    border-color: var(--primary);
-    color: white;
-}
-
-.badge {
-    font-size: 0.75rem;
-    padding: 0.35em 0.65em;
-    border-radius: 20px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .college-dashboard {
-        padding: 1rem !important;
-    }
-    
-    .main-header {
-        flex-direction: column;
-        text-align: center;
-        gap: 1rem;
-    }
-    
-    .student-card {
-        margin-bottom: 0.5rem;
-    }
-    
-    .sidebar-card {
-        display: none;
-    }
-    
-    .col-lg-9 {
-        width: 100%;
-    }
+.student-card input:checked + span {
+    color: #0d6efd;
+    font-weight: 600;
 }
 </style>
 {% endblock %}

@@ -19,6 +19,8 @@ urlpatterns = [
     path("college/register-student/", views.register_student, name="register_student"),
     path("college/edit-student/<int:student_id>/", views.edit_student, name="edit_student"),
     path("team/create/", views.team_creation, name="team_creation"),
-    
+    path("team/<int:team_id>/edit/", views.edit_team, name="edit_team"),
+    path("team/delete/<int:team_id>/", views.delete_team, name="delete_team"),
+
 
 ]
