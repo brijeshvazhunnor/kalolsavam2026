@@ -191,3 +191,22 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+
+# settings.py
+CATEGORY_LIMITS = {
+    "sahithyolsavam": 27,
+    "chithrolsavam": 9,
+    "sangeetholsavam": 17,
+    "nritholsavam": 12,
+    "drishyanatakolsavam": 8,
+}
+
+# Drishyanatakolsavam — Natakam special restriction
+NATAKAM_ITEMS = [
+    "Natakam (Malayalam)",
+    "Natakam (English)",
+    "Natakam (Hindi)",
+    "Natakam (Kannada)",
+]
+MAX_NATAKAM = 2

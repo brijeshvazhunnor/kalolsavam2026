@@ -32,7 +32,7 @@ class College(models.Model):
     college_name = models.CharField(max_length=255)
     district = models.CharField(max_length=255)
     username = models.CharField(max_length=150, unique=True)
-    password = models.CharField(max_length=255)   # plain password from CSV
+    password = models.CharField(max_length=255) 
 
     def __str__(self):
         return self.college_name
@@ -69,10 +69,10 @@ class Item(models.Model):
     name = models.CharField(max_length=255)
     numbers = models.PositiveIntegerField()
     category = models.CharField(max_length=255)
-    max_participants = models.PositiveIntegerField(default=1)  # ADD THIS
+    max_participants = models.PositiveIntegerField(default=1)
+    item_type = models.CharField(max_length=10, choices=[("single","single"),("group","group")])  # ← added
 
-    def __str__(self):
-        return self.name
+
 
 
 

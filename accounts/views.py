@@ -168,16 +168,22 @@ def edit_student(request, student_id):
 
 
 # ---------------- Create Team ----------------
+# views.py
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.conf import settings
 
 from .models import College, Student, Item, Team
 
 
 @login_required
 def team_creation(request):
-    # Only colleges can access
+    """Create team with:
+       - per-student single/group limits
+       - per-category team limits
+       - special Natakam sub-limit inside Drishyanatakolsavam
+    """
     if request.user.role != "college":
         messages.error(request, "Only college users can create teams.")
         return redirect("home")
@@ -186,12 +192,53 @@ def team_creation(request):
 
     students = Student.objects.filter(college=college).order_by("name")
     items = Item.objects.all().order_by("category", "name")
-    categories = Item.objects.values_list('category', flat=True).distinct().order_by('category')
+    categories = (
+        Item.objects.values_list("category", flat=True)
+        .distinct()
+        .order_by("category")
+    )
 
-    # for front-end: which items already have a team for this college
+    # Items that already have a team for this college
     existing_item_ids = list(
         Team.objects.filter(college=college).values_list("item_id", flat=True)
     )
+
+    # ---------- CATEGORY LIMIT INFO FOR UI ----------
+    # Expected in settings.py:
+    # CATEGORY_LIMITS = {
+    #   "sahithyolsavam": 27,
+    #   "chithrolsavam": 9,
+    #   "sangeetholsavam": 17,
+    #   "nritholsavam": 12,
+    #   "drishyanatakolsavam": 8,
+    # }
+    category_limits_cfg = getattr(settings, "CATEGORY_LIMITS", {})
+    category_limits = []
+
+    for key, limit in category_limits_cfg.items():
+        used = Team.objects.filter(
+            college=college,
+            category__iexact=key,
+        ).count()
+        category_limits.append(
+            {
+                "key": key,
+                "label": key.capitalize(),
+                "used": used,
+                "limit": limit,
+                "remaining": max(limit - used, 0),
+                "percent": (used / limit * 100) if limit > 0 else 0,
+            }
+        )
+
+    # Natakam special info for UI
+    natakam_items = getattr(settings, "NATAKAM_ITEMS", [])
+    max_natakam = getattr(settings, "MAX_NATAKAM", 2)
+    natakam_count = Team.objects.filter(
+        college=college,
+        item__name__in=natakam_items,
+    ).count()
+    # ------------------------------------------------
 
     if request.method == "POST":
         item_id = request.POST.get("item")
@@ -202,35 +249,102 @@ def team_creation(request):
             return redirect("team_creation")
 
         item = get_object_or_404(Item, id=item_id)
+        category = item.category.lower()
 
-        # Check if team already exists for this item
+        # 1️⃣ Team duplicate check
         if Team.objects.filter(college=college, item=item).exists():
             messages.error(
                 request,
-                f"You have already created a team for '{item.name}'. You can edit it below."
+                f"You already created a team for '{item.name}'. Edit it below.",
             )
             return redirect("team_creation")
 
+        # 2️⃣ Category limit check
+        current_category_count = Team.objects.filter(
+            college=college,
+            category__iexact=category,
+        ).count()
+        allowed_limit = category_limits_cfg.get(category, 99999)
+
+        if current_category_count >= allowed_limit:
+            messages.error(
+                request,
+                f"Category limit reached! You can create only {allowed_limit} "
+                f"teams in {item.category}."
+            )
+            return redirect("team_creation")
+
+        # 3️⃣ Natakam sub-limit inside Drishyanatakolsavam
+        if category == "drishyanatakolsavam" and item.name in natakam_items:
+            if natakam_count >= max_natakam:
+                messages.error(
+                    request,
+                    "You can create only "
+                    f"{max_natakam} Natakam teams "
+                    f"({', '.join(natakam_items)}).",
+                )
+                return redirect("team_creation")
+
+        # 4️⃣ No student selected
         if not selected_students:
             messages.error(request, "Please select at least one student.")
             return redirect("team_creation")
 
+        # 5️⃣ Max participants for the item
         if len(selected_students) > item.max_participants:
             messages.error(
                 request,
-                f"Maximum {item.max_participants} participants are allowed for '{item.name}'."
+                f"Maximum {item.max_participants} students allowed for "
+                f"'{item.name}'."
             )
             return redirect("team_creation")
 
+        # 6️⃣ Per-student single/group limits
+        single_limit = 4
+        group_limit = 2
+
+        for student_id in selected_students:
+            student = Student.objects.get(id=student_id)
+
+            single_count = Team.objects.filter(
+                college=college,
+                students=student,
+                item__item_type="single",
+            ).count()
+
+            group_count = Team.objects.filter(
+                college=college,
+                students=student,
+                item__item_type="group",
+            ).count()
+
+            if item.item_type == "single" and single_count >= single_limit:
+                messages.error(
+                    request,
+                    f"❌ {student.name} already reached the limit of "
+                    f"{single_limit} single items.",
+                )
+                return redirect("team_creation")
+
+            if item.item_type == "group" and group_count >= group_limit:
+                messages.error(
+                    request,
+                    f"❌ {student.name} already reached the limit of "
+                    f"{group_limit} group items.",
+                )
+                return redirect("team_creation")
+
+        # 7️⃣ CREATE TEAM — all validations passed
         team = Team.objects.create(
             college=college,
             item=item,
-            category=item.category
+            category=item.category,
         )
         team.students.set(selected_students)
         messages.success(request, f"Team for '{item.name}' created successfully.")
         return redirect("team_creation")
 
+    # Load teams for UI
     teams = (
         Team.objects.filter(college=college)
         .select_related("item")
@@ -238,35 +352,25 @@ def team_creation(request):
         .order_by("item__category", "item__name")
     )
 
-    context = {
-        "students": students,
-        "items": items,
-        "categories": categories,
-        "teams": teams,
-        "existing_item_ids": existing_item_ids,
-    }
-    return render(request, "team/create_team.html", context)
-
-
-from django.contrib import messages
-from django.shortcuts import redirect, get_object_or_404
-
-@login_required
-def delete_team(request, team_id):
-    team = get_object_or_404(Team, id=team_id)
-
-    if team.college.username != request.user.username:
-        messages.error(request, "You are not allowed to delete this team.")
-        return redirect("team_creation")
-
-    team.delete()
-    messages.success(request, "Team deleted successfully.")
-    return redirect("team_creation")
-
+    return render(
+        request,
+        "team/create_team.html",
+        {
+            "students": students,
+            "items": items,
+            "categories": categories,
+            "teams": teams,
+            "existing_item_ids": existing_item_ids,
+            "category_limits": category_limits,
+            "natakam_count": natakam_count,
+            "max_natakam": max_natakam,
+        },
+    )
 
 
 @login_required
 def edit_team(request, team_id):
+    """Edit team with same student limit rules (single/group) kept."""
     if request.user.role != "college":
         messages.error(request, "Only college users can edit teams.")
         return redirect("home")
@@ -285,15 +389,76 @@ def edit_team(request, team_id):
         if len(selected_students) > item.max_participants:
             messages.error(
                 request,
-                f"Maximum {item.max_participants} participants are allowed for '{item.name}'."
+                f"Maximum {item.max_participants} participants allowed for "
+                f"'{item.name}'.",
             )
             return redirect("team_creation")
+
+        single_limit = 4
+        group_limit = 2
+
+        for student_id in selected_students:
+            student = Student.objects.get(id=student_id)
+
+            single_count = (
+                Team.objects.filter(
+                    college=college,
+                    students=student,
+                    item__item_type="single",
+                )
+                .exclude(id=team.id)
+                .count()
+            )
+
+            group_count = (
+                Team.objects.filter(
+                    college=college,
+                    students=student,
+                    item__item_type="group",
+                )
+                .exclude(id=team.id)
+                .count()
+            )
+
+            if item.item_type == "single" and single_count >= single_limit:
+                messages.error(
+                    request,
+                    f"❌ {student.name} already reached the limit of "
+                    f"{single_limit} single items.",
+                )
+                return redirect("team_creation")
+
+            if item.item_type == "group" and group_count >= group_limit:
+                messages.error(
+                    request,
+                    f"❌ {student.name} already reached the limit of "
+                    f"{group_limit} group items.",
+                )
+                return redirect("team_creation")
 
         team.students.set(selected_students)
         messages.success(request, f"Team for '{item.name}' updated successfully.")
         return redirect("team_creation")
 
     return redirect("team_creation")
+
+
+
+
+@login_required
+def delete_team(request, team_id):
+    """Delete a team belonging to this college."""
+    if request.user.role != "college":
+        messages.error(request, "Only college users can delete teams.")
+        return redirect("home")
+
+    college = get_object_or_404(College, username=request.user.username)
+    team = get_object_or_404(Team, id=team_id, college=college)
+    item_name = team.item.name
+    team.delete()
+    messages.success(request, f"Team for '{item_name}' deleted successfully.")
+    return redirect("team_creation")
+
 
 
 
