@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Student Results{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">Student Results</h3>
+
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-md-8">
+      <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search student name...">
+    </div>
+    <div class="col-md-4">
+      <button class="btn btn-primary w-100">Search</button>
+    </div>
+  </form>
+
+  {% if students %}
+  <div class="list-group mb-3">
+    {% for s in students %}
+      <a href="?student_id={{ s.id }}" class="list-group-item list-group-item-action">
+        <strong>{{ s.name }}</strong> — <small class="text-muted">{{ s.college.college_name }}</small>
+      </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if selected_student %}
+    <h5>Results for {{ selected_student.name }}</h5>
+    {% if results %}
+      <ul class="list-group">
+        {% for r in results %}
+          <li class="list-group-item">
+            <strong>{{ r.item.category }} / {{ r.item.name }}</strong> — {{ r.get_position_display }} — Grade {{ r.grade }} — {{ r.points }} pts
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="alert alert-warning">No results for this student.</div>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

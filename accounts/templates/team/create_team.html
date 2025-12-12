@@ -64,15 +64,7 @@
                 </div>
             </div>
 
-            <!-- POPUP MESSAGES -->
-            {% if messages %}
-                {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm glass-card">
-                    <i class="fas fa-info-circle me-2"></i>{{ message }}
-                    <button class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-                {% endfor %}
-            {% endif %}
+        
 
             <!-- CATEGORY LIMIT SUMMARY -->
             {% if category_limits %}

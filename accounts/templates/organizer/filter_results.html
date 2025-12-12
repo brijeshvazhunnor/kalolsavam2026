@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Filter Results{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <h3 class="fw-bold mb-3">Filter Results</h3>
+
+    <form method="get" class="row g-3 mb-4">
+
+        <div class="col-md-4">
+            <label class="form-label">Category</label>
+            <select name="category" class="form-select">
+                <option value="">All</option>
+                {% for c in categories %}
+                <option value="{{ c }}" {% if c == selected_category %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Item Name</label>
+            <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search item…">
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">College</label>
+            <select name="college" class="form-select">
+                <option value="">All</option>
+                {% for c in colleges %}
+                <option value="{{ c.id }}" {% if c.id|stringformat:"s" == selected_college %}selected{% endif %}>
+                    {{ c.college_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-12 text-end">
+            <button class="btn btn-primary"><i class="fas fa-search me-2"></i>Apply Filters</button>
+        </div>
+
+    </form>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            {% if results %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>College</th>
+                        <th>Position</th>
+                        <th>Grade</th>
+                        <th>Points</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for r in results %}
+                    <tr>
+                        <td>{{ r.item.name }}</td>
+                        <td>{{ r.team.college.college_name }}</td>
+                        <td>{{ r.get_position_display }}</td>
+                        <td>{{ r.grade }}</td>
+                        <td>{{ r.points }}</td>
+                        <td>
+                            <a href="{% url 'edit_result' r.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+            {% else %}
+                <p class="text-muted text-center">No results found.</p>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

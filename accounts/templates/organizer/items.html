@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Manage Results{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold mb-0">
+            <i class="fas fa-trophy me-2 text-warning"></i>
+            Manage Results
+        </h3>
+
+        <a href="{% url 'organizer_dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Dashboard
+        </a>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-body">
+
+            <form method="get" class="row g-3 align-items-end">
+
+                <!-- CATEGORY -->
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-layer-group text-muted me-1"></i> Category
+                    </label>
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for c in categories %}
+                            <option value="{{ c }}" {% if selected_category == c %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- SEARCH INPUT -->
+                <div class="col-md-6 position-relative">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-search text-muted me-1"></i> Search Item
+                    </label>
+                    <input type="text" name="q" id="itemSearch"
+                           value="{{ q }}"
+                           class="form-control"
+                           placeholder="Type item name…"
+                           autocomplete="off">
+
+                    <!-- AUTOSUGGEST BOX -->
+                    <ul id="suggestionBox"
+                        class="list-group position-absolute w-100 shadow-sm rounded-3"
+                        style="display:none; z-index:1000;"></ul>
+                </div>
+
+                <!-- APPLY -->
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <button class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-1"></i>Apply
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+    <!-- ITEMS TABLE -->
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+
+                <thead class="table-light">
+                    <tr>
+                        <th>Category</th>
+                        <th>Item</th>
+                        <th>Total Teams</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                {% for item in items %}
+                    <tr>
+                        <td class="text-muted">{{ item.category }}</td>
+
+                        <td class="fw-semibold">{{ item.name }}</td>
+
+                        <td>
+                            <span class="badge bg-info text-dark">
+                                {{ item.team_set.count }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {% if item.has_results %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle me-1"></i> Results Added
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-clock me-1"></i> Pending
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="text-end">
+                            {% if item.has_results %}
+                                <a class="btn btn-sm btn-outline-success me-1"
+                                href="{% url 'view_results' item.id %}">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+
+                                <a class="btn btn-sm btn-outline-primary"
+                                href="{% url 'add_results' item.id %}">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            {% else %}
+                                <a class="btn btn-sm btn-primary"
+                                href="{% url 'add_results' item.id %}">
+                                    <i class="fas fa-plus me-1"></i>Add Result
+                                </a>
+                            {% endif %}
+                        </td>
+
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            <i class="fas fa-info-circle me-2"></i>No matching items found
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const searchInput = document.getElementById("itemSearch");
+    const suggestionBox = document.getElementById("suggestionBox");
+
+    // Safeguard: in case backend forgot to send all_items
+    const itemList = [{% for it in all_items %}{ name: "{{ it.name|escapejs }}", category: "{{ it.category|escapejs }}" },{% endfor %}];
+
+    // Autocomplete event
+    searchInput.addEventListener("input", function () {
+        const query = this.value.toLowerCase();
+        suggestionBox.innerHTML = "";
+
+        if (query.length < 1) {
+            suggestionBox.style.display = "none";
+            return;
+        }
+
+        const filtered = itemList.filter(i =>
+            i.name.toLowerCase().includes(query)
+        ).slice(0, 7);
+
+        filtered.forEach(item => {
+            const li = document.createElement("li");
+            li.className = "list-group-item list-group-item-action";
+            li.innerHTML = `
+                <strong>${item.name}</strong><br>
+                <small class="text-muted">${item.category}</small>
+            `;
+            li.onclick = () => {
+                searchInput.value = item.name;
+                suggestionBox.style.display = "none";
+            };
+            suggestionBox.appendChild(li);
+        });
+
+        suggestionBox.style.display = filtered.length ? "block" : "none";
+    });
+
+    // Hide suggestion box on outside click
+    document.addEventListener("click", (e) => {
+        if (!searchInput.contains(e.target))
+            suggestionBox.style.display = "none";
+    });
+
+});
+</script>
+{% endblock %}

@@ -104,3 +104,44 @@ class Team(models.Model):
 
     def __str__(self):
         return f"{self.item.name} - {self.college.college_name}"
+
+
+
+from django.db import models
+from django.utils.timezone import now
+from .models import Item, Team  # ensure Item & Team imported correctly
+
+
+class Result(models.Model):
+    POSITION_CHOICES = [
+        (1, "1st"),
+        (2, "2nd"),
+        (3, "3rd"),
+    ]
+
+    GRADE_CHOICES = [
+        ("A", "A"),
+        ("B", "B"),
+        ("C", "C"),
+        ("D", "D"),
+        ("E", "E"),
+    ]
+
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="results")
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="results")
+
+    position = models.PositiveSmallIntegerField(choices=POSITION_CHOICES)
+    grade = models.CharField(max_length=1, choices=GRADE_CHOICES, default="E")
+    points = models.IntegerField(default=0)
+
+    # soft delete
+    is_deleted = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(default=now)
+
+    class Meta:
+        unique_together = ("item", "team")
+        ordering = ["position", "-points"]
+
+    def __str__(self):
+        return f"{self.item.name} — {self.team.college.college_name}"

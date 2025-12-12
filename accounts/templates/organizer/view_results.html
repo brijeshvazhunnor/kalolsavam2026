@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Results — {{ item.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Results — <span class="text-primary">{{ item.name }}</span></h3>
+    <div>
+      <a href="{% url 'organizer_items' %}" class="btn btn-outline-secondary">Back</a>
+      <a href="{% url 'delete_item_results' item.id %}" class="btn btn-danger" onclick="return confirm('Delete all results for this item?');">Delete All</a>
+      <a href="{% url 'undo_delete_results' item.id %}" class="btn btn-outline-secondary">Undo</a>
+    </div>
+  </div>
+
+  {% if results %}
+    {% for pos,label in positions %}
+    <div class="card mb-3 shadow-sm">
+      <div class="card-header {% if pos==1 %}bg-warning{% elif pos==2 %}bg-secondary text-white{% else %}bg-info{% endif %}">
+        <strong>{{ label }}</strong>
+      </div>
+
+      <div class="card-body">
+        {% for r in results %}
+          {% if r.position == pos %}
+          <div class="mb-3 p-3 border rounded">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h5 class="mb-1">{{ r.team.college.college_name }}</h5>
+                <div class="text-muted small">Grade: <span class="badge bg-primary">{{ r.grade }}</span> &nbsp; Points: <span class="badge bg-success">{{ r.points }}</span></div>
+              </div>
+              <div class="text-end">
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'edit_result' r.id %}"><i class="fas fa-edit"></i></a>
+                <a class="btn btn-sm btn-outline-danger" href="#" onclick="if(confirm('Delete this entry?')) location.href='{% url 'delete_item_results' item.id %}';"><i class="fas fa-trash"></i></a>
+              </div>
+            </div>
+
+            <div class="mt-2">
+              <strong>Team members:</strong>
+              <ul class="mb-0">
+                {% for s in r.team.students.all %}
+                <li>{{ s.name }} — {{ s.department }} (Year {{ s.current_year }})</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="alert alert-warning">No results for this item.</div>
+  {% endif %}
+</div>
+{% endblock %}
