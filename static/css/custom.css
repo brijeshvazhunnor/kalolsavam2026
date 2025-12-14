@@ -275,3 +275,79 @@ body {
     }
 }
 
+/* ===== DASHBOARD STATS ===== */
+.dashboard-stat {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.08);
+}
+
+.stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.3rem;
+}
+
+.stat-value {
+    font-size: 1.6rem;
+    font-weight: 600;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+/* ===== CARDS ===== */
+.dashboard-card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.08);
+}
+
+/* ===== ACTION TILES ===== */
+.action-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    background: #f8fafc;
+    border-radius: 14px;
+    text-decoration: none;
+    color: #1f2937;
+    font-weight: 500;
+    transition: 0.25s ease;
+}
+
+.action-tile i {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+    color: #4f46e5;
+}
+
+.action-tile:hover {
+    background: #eef2ff;
+    transform: translateY(-3px);
+}
+
+/* ===== STATUS ===== */
+.status-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed #e5e7eb;
+}
+
+.status-row:last-child {
+    border-bottom: none;
+}

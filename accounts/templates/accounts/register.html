@@ -2,6 +2,431 @@
 {% load widget_tweaks %}
 {% load static %}
 
+{% block title %}College Dashboard | Kalolsavam 2026{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* College Dashboard Specific Styles */
+/*     
+    .college-dashboard {
+        padding: 2rem 0;
+        background: linear-gradient(135deg, #f9f7f0 0%, #f0ede4 100%);
+        min-height: calc(100vh - 180px);
+    } */
+    
+    /* Fixed Background Image */
+    body {
+        background-image: url("{% static 'img/bgimg.png' %}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }
+
+
+    /* Sidebar Styling */
+    .sidebar-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 241, 233, 0.98) 100%);
+        border: 1px solid rgba(212, 175, 55, 0.2);
+        border-radius: var(--border-radius);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+    
+    .gradient-header {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+        padding: 2rem 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .gradient-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent 30%, rgba(212, 175, 55, 0.1) 100%);
+    }
+    
+    .gradient-header i {
+        font-size: 3.5rem;
+        color: var(--accent-gold);
+        margin-bottom: 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        width: 90px;
+        height: 90px;
+        line-height: 90px;
+        border-radius: 50%;
+        border: 3px solid rgba(212, 175, 55, 0.3);
+    }
+    
+    .gradient-header h5 {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.4rem;
+        margin-bottom: 0.5rem;
+        color: white;
+    }
+    
+    .gradient-header .small {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.9rem;
+    }
+    
+    /* Sidebar Navigation */
+    .nav-pills {
+        padding: 1.5rem 1rem;
+    }
+    
+    .nav-link {
+        border-radius: 10px;
+        padding: 1rem 1.2rem !important;
+        margin-bottom: 0.8rem;
+        color: var(--text-dark) !important;
+        background: transparent;
+        border: 1px solid rgba(212, 175, 55, 0.1);
+        transition: var(--transition);
+        font-weight: 500;
+    }
+    
+    .nav-link:hover {
+        background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(193, 154, 107, 0.1) 100%);
+        color: var(--primary-dark) !important;
+        border-color: var(--accent-gold);
+        transform: translateX(5px);
+    }
+    
+    .nav-link.active {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+        color: white !important;
+        border-color: var(--accent-gold);
+        box-shadow: 0 5px 15px rgba(26, 31, 43, 0.2);
+    }
+    
+    .nav-link i {
+        width: 25px;
+        text-align: center;
+        margin-right: 10px;
+        font-size: 1.1rem;
+    }
+    
+    /* Main Header */
+    .main-header {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 241, 233, 0.98) 100%);
+        border: 1px solid rgba(212, 175, 55, 0.2);
+        border-radius: var(--border-radius);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.8rem 2rem;
+    }
+    
+    .main-header h2 {
+        font-family: 'Playfair Display', serif;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+    }
+    
+    .main-header p {
+        color: var(--text-light);
+        margin: 0;
+    }
+    
+    .main-header i {
+        color: var(--accent-gold);
+        background: rgba(212, 175, 55, 0.1);
+        padding: 10px;
+        border-radius: 50%;
+    }
+    
+    /* Welcome Alert */
+    .welcome-alert {
+        background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(193, 154, 107, 0.1) 100%);
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        border-left: 4px solid var(--accent-gold);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        font-size: 1.1rem;
+    }
+    
+    .welcome-alert span {
+        color: var(--primary-dark);
+        font-weight: 600;
+    }
+    
+    /* Card Styles */
+    .dashboard-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 241, 233, 0.98) 100%);
+        border: 1px solid rgba(212, 175, 55, 0.2);
+        border-radius: var(--border-radius);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        height: 100%;
+        transition: var(--transition);
+    }
+    
+    .dashboard-card:hover {
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+        border-color: var(--accent-gold);
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+        color: white;
+        font-family: 'Playfair Display', serif;
+        font-weight: 600;
+        font-size: 1.2rem;
+        padding: 1.5rem 2rem;
+        border: none;
+        border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .card-header::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--accent-gold), var(--accent-bronze));
+    }
+    
+    .card-header i {
+        margin-right: 10px;
+        color: var(--accent-gold);
+    }
+    
+    .card-header .badge {
+        background: var(--accent-gold);
+        color: var(--primary-dark);
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+    }
+    
+    /* Form Styling */
+    .form-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .form-control, .form-select {
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        border-radius: 8px;
+        padding: 0.8rem 1rem;
+        background: rgba(255, 255, 255, 0.9);
+        transition: var(--transition);
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--accent-gold);
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+        background: white;
+    }
+    
+    .form-control::placeholder {
+        color: rgba(108, 117, 125, 0.6);
+    }
+    
+    /* Button Styling */
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+        border: none;
+        padding: 1rem 2rem;
+        font-weight: 600;
+        border-radius: 10px;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-bronze) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3);
+    }
+    
+    .btn-outline-primary {
+        border: 2px solid var(--primary-dark);
+        color: var(--primary-dark);
+        font-weight: 600;
+        padding: 0.8rem 1.5rem;
+        border-radius: 8px;
+        transition: var(--transition);
+    }
+    
+    .btn-outline-primary:hover {
+        background: var(--primary-dark);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(26, 31, 43, 0.1);
+    }
+    
+    /* Table Styling */
+    .student-table-container {
+        max-height: 500px;
+        overflow-y: auto;
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+    }
+    
+    .student-table-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .student-table-container::-webkit-scrollbar-track {
+        background: rgba(212, 175, 55, 0.1);
+        border-radius: 3px;
+    }
+    
+    .student-table-container::-webkit-scrollbar-thumb {
+        background: var(--accent-gold);
+        border-radius: 3px;
+    }
+    
+    .table {
+        margin-bottom: 0;
+    }
+    
+    .table tbody tr {
+        border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+        transition: var(--transition);
+    }
+    
+    .table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, rgba(193, 154, 107, 0.05) 100%);
+    }
+    
+    .table td {
+        padding: 1.2rem 1.5rem;
+        vertical-align: middle;
+    }
+    
+    .table td:first-child {
+        padding-left: 2rem;
+    }
+    
+    .table td:last-child {
+        padding-right: 2rem;
+    }
+    
+    .student-name {
+        font-weight: 600;
+        color: var(--primary-dark);
+        font-size: 1.05rem;
+        margin-bottom: 0.3rem;
+    }
+    
+    .student-dept {
+        color: var(--text-light);
+        font-size: 0.9rem;
+    }
+    
+    .year-badge {
+        background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(193, 154, 107, 0.1));
+        color: var(--primary-dark);
+        font-weight: 600;
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+    
+    .btn-group .btn {
+        border-radius: 8px;
+        padding: 0.5rem 0.8rem;
+        margin-left: 0.5rem;
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        transition: var(--transition);
+    }
+    
+    .btn-group .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-outline-info {
+        color: var(--info);
+        border-color: var(--info);
+    }
+    
+    .btn-outline-info:hover {
+        background: var(--info);
+        color: white;
+    }
+    
+    .btn-outline-warning {
+        color: var(--accent-gold);
+        border-color: var(--accent-gold);
+    }
+    
+    .btn-outline-warning:hover {
+        background: var(--accent-gold);
+        color: var(--primary-dark);
+    }
+    
+    /* Empty State */
+    .empty-state {
+        padding: 4rem 2rem;
+        text-align: center;
+        color: var(--text-light);
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        color: rgba(212, 175, 55, 0.3);
+        margin-bottom: 1rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 992px) {
+        .sidebar-card {
+            margin-bottom: 2rem;
+        }
+        
+        .main-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .college-dashboard {
+            padding: 1rem 0;
+        }
+        
+        .gradient-header {
+            padding: 1.5rem;
+        }
+        
+        .gradient-header i {
+            width: 70px;
+            height: 70px;
+            line-height: 70px;
+            font-size: 2.5rem;
+        }
+        
+        .nav-link {
+            padding: 0.8rem 1rem !important;
+        }
+        
+        .table td {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block page_title_content %}
+    College Dashboard
+{% endblock %}
+
 {% block content %}
 
 <div class="container-fluid py-4 college-dashboard">
@@ -9,43 +434,34 @@
 
         <!-- Sidebar -->
         <div class="col-lg-3 col-md-4 mb-4">
-            <div class="card sidebar-card shadow border-0 h-100">
-                <div class="gradient-header text-white p-4 text-center rounded-top">
-                    <i class="fas fa-university fa-3x mb-3 text-white-50"></i>
-                    <h5 class="fw-bold mb-1">{{ user.first_name|default:user.username }}</h5>
-                    <p class="small opacity-75 mb-0">College Administrator</p>
+            <div class="sidebar-card h-100">
+                <div class="gradient-header text-center">
+                    <i class="fas fa-university"></i>
+                    <h5>{{ user.first_name|default:user.username }}</h5>
+                    <p class="small opacity-75">College Administrator</p>
                 </div>
 
-                <div class="p-3">
+                <div class="nav-container">
                     <ul class="nav nav-pills flex-column">
-
-                        <!-- <li class="nav-item">
-                            <a class="nav-link {% if request.path == '/college/dashboard/' %}active{% endif %}"
-                               href="{% url 'college_dashboard' %}">
-                                <i class="fas fa-home me-2"></i>Dashboard
-                            </a>
-                        </li> -->
-
                         <li class="nav-item">
                             <a class="nav-link {% if request.path == '/college/register-student/' %}active{% endif %}"
                                href="{% url 'register_student' %}">
-                                <i class="fas fa-user-plus me-2"></i>Register Students
+                                <i class="fas fa-user-plus"></i>Register Students
                             </a>
                         </li>
 
                         <li class="nav-item">
                             <a class="nav-link {% if request.path == '/team/create/' %}active{% endif %}"
                                href="{% url 'team_creation' %}">
-                                <i class="fas fa-users me-2"></i>Create Teams
+                                <i class="fas fa-users"></i>Create Teams
                             </a>
                         </li>
 
                         <li class="nav-item">
                             <a class="nav-link" href="#">
-                                <i class="fas fa-list me-2"></i>Student List
+                                <i class="fas fa-list"></i>Student List
                             </a>
                         </li>
-
                     </ul>
                 </div>
             </div>
@@ -55,41 +471,36 @@
         <div class="col-lg-9 col-md-8">
 
             <!-- Header -->
-            <div class="main-header mb-4 p-4 rounded shadow-sm">
+            <div class="main-header mb-4">
                 <div>
-                    <h2 class="h4 fw-bold text-dark mb-1">
-                        <i class="fas fa-user-plus me-2 text-primary"></i>Student Registration
+                    <h2 class="h4 fw-bold mb-1">
+                        <i class="fas fa-user-plus me-2"></i>Student Registration
                     </h2>
                     <p class="text-muted mb-0">Add students from your college to participate in events</p>
                 </div>
                 <div>
-                    <a href="{% url 'team_creation' %}" class="btn btn-outline-primary btn-sm">
+                    <a href="{% url 'team_creation' %}" class="btn btn-outline-primary">
                         <i class="fas fa-users me-2"></i>Create Teams
                     </a>
                 </div>
             </div>
 
-            <!-- Flash Messages {% if messages %}
-                {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-                {% endfor %}
-            {% endif %} -->
-            
-
-            <!-- Welcome -->
-            <div class="alert alert-info shadow-sm mb-4 fw-semibold">
-                👋 Welcome, <span class="text-primary">{{ user.college_name }}</span>
+            <!-- Welcome Alert -->
+            <div class="welcome-alert mb-4">
+                <i class="fas fa-university me-2"></i>
+                Welcome, <span>{{ user.college_name }}</span>
+                <p class="mb-0 mt-2 text-muted">
+                    You are currently managing student registrations for Kalolsavam 2026. 
+                    Register students, create teams, and track participation.
+                </p>
             </div>
 
             <div class="row g-4">
 
                 <!-- Registration Form -->
                 <div class="col-lg-6 col-md-12">
-                    <div class="card shadow border-0 h-100">
-                        <div class="card-header text-white fw-bold" style="background: linear-gradient(135deg,#4c00ff,#3700b3);">
+                    <div class="dashboard-card">
+                        <div class="card-header">
                             <i class="fas fa-user-plus me-2"></i>Register New Student
                         </div>
 
@@ -97,45 +508,63 @@
                             <form method="POST" enctype="multipart/form-data" action="{% url 'register_student' %}">
                                 {% csrf_token %}
 
-                                <label class="form-label fw-semibold">Student Name</label>
-                                <input type="text" name="name" class="form-control mb-3" required>
+                                <div class="mb-4">
+                                    <label class="form-label">Student Name</label>
+                                    <input type="text" name="name" class="form-control" 
+                                           placeholder="Enter full name" required>
+                                </div>
 
-                                <label class="form-label fw-semibold">Admission / ID Number</label>
-                                <input type="text" name="id_card" class="form-control mb-3" required>
+                                <div class="mb-4">
+                                    <label class="form-label">Admission / ID Number</label>
+                                    <input type="text" name="id_card" class="form-control" 
+                                           placeholder="Enter student ID" required>
+                                </div>
 
-                                <div class="row">
+                                <div class="row mb-4">
                                     <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Date of Birth</label>
-                                        <input type="date" name="date_of_birth" class="form-control mb-3" required>
+                                        <label class="form-label">Date of Birth</label>
+                                        <input type="date" name="date_of_birth" class="form-control" required>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Department</label>
-                                        <input type="text" name="department" class="form-control mb-3" required>
+                                        <label class="form-label">Department</label>
+                                        <input type="text" name="department" class="form-control" 
+                                               placeholder="Department name" required>
                                     </div>
                                 </div>
 
-                                <div class="row">
+                                <div class="row mb-4">
                                     <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Year of Joining</label>
-                                        <input type="number" name="year_of_joining" class="form-control mb-3"
-                                            min="2000" max="2026" required>
+                                        <label class="form-label">Year of Joining</label>
+                                        <input type="number" name="year_of_joining" class="form-control"
+                                            min="2000" max="2026" 
+                                            placeholder="e.g., 2023" required>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Current Year</label>
-                                        <select name="current_year" class="form-select mb-3" required>
+                                        <label class="form-label">Current Year</label>
+                                        <select name="current_year" class="form-select" required>
                                             <option value="">Select Year</option>
-                                            <option>1</option><option>2</option>
-                                            <option>3</option><option>4</option><option>5</option>
+                                            <option>1</option>
+                                            <option>2</option>
+                                            <option>3</option>
+                                            <option>4</option>
+                                            <option>5</option>
                                         </select>
                                     </div>
                                 </div>
 
-                                <label class="form-label fw-semibold">Upload ID Card (Optional)</label>
-                                <input type="file" name="id_card_file" class="form-control mb-4"
-                                    accept=".pdf,.jpg,.jpeg,.png">
+                                <div class="mb-4">
+                                    <label class="form-label">Upload ID Card </label>
+                                    <div class="input-group">
+                                        <input type="file" name="id_card_file" class="form-control" 
+                                               accept=".pdf,.jpg,.jpeg,.png">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-file-upload"></i>
+                                        </span>
+                                    </div>
+                                    <small class="text-muted">Supports JPG, JPEG, PNG (Max 1MB)</small>
+                                </div>
 
-                                <button type="submit" class="btn btn-primary w-100"
-                                    style="background: linear-gradient(135deg,#4c00ff,#3700b3);">
+                                <button type="submit" class="btn btn-primary w-100">
                                     <i class="fas fa-user-plus me-2"></i>Register Student
                                 </button>
                             </form>
@@ -145,36 +574,40 @@
 
                 <!-- Student List -->
                 <div class="col-lg-6 col-md-12">
-                    <div class="card shadow border-0 h-100">
-                        <div class="card-header bg-secondary text-white fw-bold">
-                            <i class="fas fa-users me-2"></i>Registered Students
-                            <span class="badge bg-light text-dark float-end">{{ students|length }}</span>
+                    <div class="dashboard-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-users me-2"></i>Registered Students
+                            </div>
+                            <span class="badge">{{ students|length }}</span>
                         </div>
 
-                        <div class="card-body p-0">
-
+                        <div class="student-table-container">
                             {% if students %}
-                            <!-- Scrollable Student List -->
-                            <div style="max-height: 480px; overflow-y: auto;">
-                                <table class="table align-middle table-hover mb-0">
+                                <table class="table align-middle">
                                     <tbody>
-                                    {% for s in students %}
+                                    {% for student in students %}
                                         <tr>
-                                            <td class="ps-4">
-                                                <strong>{{ s.name }}</strong><br>
-                                                <small class="text-muted">{{ s.department }}</small>
+                                            <td>
+                                                <div class="student-name">{{ student.name }}</div>
+                                                <div class="student-dept">{{ student.department }}</div>
                                             </td>
                                             <td>
-                                                <span class="badge bg-secondary">Year {{ s.current_year }}</span>
+                                                <span class="year-badge">Year {{ student.current_year }}</span>
                                             </td>
-                                            <td align="right" class="pe-4">
+                                            <td class="text-end">
                                                 <div class="btn-group">
-                                                    {% if s.id_card_file %}
-                                                    <a class="btn btn-outline-info btn-sm" href="{{ s.id_card_file.url }}" target="_blank">
-                                                        <i class="fas fa-file"></i>
-                                                    </a>
+                                                    {% if student.id_card_file %}
+                                                        <a class="btn btn-outline-info btn-sm" 
+                                                           href="{{ student.id_card_file.url }}" 
+                                                           target="_blank"
+                                                           title="View ID Card">
+                                                            <i class="fas fa-file"></i>
+                                                        </a>
                                                     {% endif %}
-                                                    <a href="{% url 'edit_student' s.id %}" class="btn btn-outline-warning btn-sm">
+                                                    <a href="{% url 'edit_student' student.id %}" 
+                                                       class="btn btn-outline-warning btn-sm"
+                                                       title="Edit Student">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
                                                 </div>
@@ -183,22 +616,71 @@
                                     {% endfor %}
                                     </tbody>
                                 </table>
-                            </div>
                             {% else %}
-                            <p class="text-center py-4 text-muted">No students yet.</p>
+                                <div class="empty-state">
+                                    <i class="fas fa-users"></i>
+                                    <h6 class="mb-2">No Students Registered</h6>
+                                    <p class="text-muted mb-0">Start by registering your first student</p>
+                                </div>
                             {% endif %}
-
                         </div>
-
                     </div>
                 </div>
 
             </div>
-
 
         </div>
 
     </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form validation enhancement
+        const form = document.querySelector('form');
+        const inputs = form.querySelectorAll('input, select');
+        
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('focused');
+                if (this.checkValidity()) {
+                    this.style.borderColor = 'var(--success)';
+                } else {
+                    this.style.borderColor = 'var(--danger)';
+                }
+            });
+        });
+        
+        // File input styling
+        const fileInput = document.querySelector('input[type="file"]');
+        if (fileInput) {
+            fileInput.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    this.style.borderColor = 'var(--success)';
+                    const label = this.parentElement.querySelector('.input-group-text');
+                    label.innerHTML = '<i class="fas fa-check text-success"></i>';
+                }
+            });
+        }
+        
+        // Table row hover effects
+        const tableRows = document.querySelectorAll('.table tbody tr');
+        tableRows.forEach(row => {
+            row.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateX(5px)';
+            });
+            
+            row.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateX(0)';
+            });
+        });
+    });
+</script>
 {% endblock %}
