@@ -1,91 +1,136 @@
-{% extends "base.html" %}
+{% extends "organizer/base.html" %}
+
 {% block title %}Organizer Dashboard{% endblock %}
+{% block page_title %}Organizer Dashboard{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <h3 class="mb-4">Organizer Dashboard</h3>
 
-  <div class="row g-3">
-    <div class="col-md-4">
-      <div class="card shadow-sm p-3 h-100">
-        <h6 class="mb-1">Items</h6>
-        <div class="display-6 fw-bold">{{ total_items }}</div>
-        <p class="text-muted">Total event items</p>
-        <a href="{% url 'organizer_items' %}" class="btn btn-primary btn-sm mt-2">Manage Items</a>
-      </div>
+<!-- Stats Row -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-primary text-white">
+                <i class="fas fa-trophy"></i>
+            </div>
+            <div class="stat-value">{{ total_items }}</div>
+            <div class="stat-label">Event Items</div>
+        </div>
     </div>
 
-    <div class="col-md-4">
-      <div class="card shadow-sm p-3 h-100">
-        <h6 class="mb-1">Teams</h6>
-        <div class="display-6 fw-bold">{{ total_teams }}</div>
-        <p class="text-muted">Registered teams</p>
-        <a href="{% url 'organizer_items' %}" class="btn btn-outline-primary btn-sm mt-2">Teams & Results</a>
-      </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-success text-white">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-value">{{ total_teams }}</div>
+            <div class="stat-label">Teams</div>
+        </div>
     </div>
 
-    <div class="col-md-4">
-      <div class="card shadow-sm p-3 h-100">
-        <h6 class="mb-1">Results</h6>
-        <div class="display-6 fw-bold">{{ total_results }}</div>
-        <p class="text-muted">Published results</p>
-        <a href="{% url 'organizer_items' %}" class="btn btn-outline-secondary btn-sm mt-2">Manage Results</a>
-      </div>
-    </div>
-  </div>
-
-  <div class="card mt-4 shadow-sm">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <strong>Live College Rankings</strong>
-      <small class="text-muted">Auto refresh</small>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-warning text-white">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-value">{{ total_results }}</div>
+            <div class="stat-label">Published Results</div>
+        </div>
     </div>
 
-    <ul class="list-group list-group-flush" id="rankingList">
-      <li class="list-group-item text-center text-muted">Loading...</li>
-    </ul>
-  </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-info text-white">
+                <i class="fas fa-university"></i>
+            </div>
+            <div class="stat-value">{{ total_colleges }}</div>
+            <div class="stat-label">Colleges</div>
+        </div>
+    </div>
 </div>
 
-{% block extra_js %}
-<script>
-let lastOrder = [];
-function loadRankings() {
-    fetch("{% url 'college_ranking_live' %}")
-    .then(r => r.json())
-    .then(data => {
-        const list = document.getElementById("rankingList");
-        list.innerHTML = "";
-        if (!data.rankings || data.rankings.length === 0) {
-            list.innerHTML = '<li class="list-group-item text-center text-muted">No published results</li>';
-            lastOrder = [];
-            return;
-        }
+<!-- Quick Actions -->
+<div class="card table-card mb-4">
+    <div class="p-3 border-bottom">
+        <h5 class="mb-0">
+            <i class="fas fa-bolt me-2"></i>Quick Actions
+        </h5>
+    </div>
+    <div class="p-3">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <a href="{% url 'organizer_items' %}" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-trophy me-1"></i> Manage Items
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{% url 'organizer_items' %}" class="btn btn-outline-success w-100">
+                    <i class="fas fa-plus-circle me-1"></i> Add Results
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{% url 'college_ranking_live' %}" class="btn btn-outline-info w-100">
+                    <i class="fas fa-chart-bar me-1"></i> College Ranking
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{% url 'organizer_student_results' %}" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-search me-1"></i> Search Results
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 
-        const newOrder = data.rankings.map(x => x.college);
+<!-- Dashboard Fillers -->
+<div class="row g-4">
 
-        data.rankings.forEach((row, idx) => {
-            const li = document.createElement("li");
-            li.className = "list-group-item d-flex justify-content-between align-items-center";
-            let trend = "";
-            const prev = lastOrder.indexOf(row.college);
-            if (prev === -1) trend = "";
-            else if (prev > idx) trend = '<span class="text-success ms-2"><i class="fas fa-arrow-up"></i></span>';
-            else if (prev < idx) trend = '<span class="text-danger ms-2"><i class="fas fa-arrow-down"></i></span>';
-            li.innerHTML = `<div><strong>${idx+1}. ${row.college}</strong> ${trend}<div class="text-muted small">${row.total_points} pts</div></div>
-                            <span class="badge bg-success">${row.total_points} pts</span>`;
-            list.appendChild(li);
-        });
+    <!-- Info Panel -->
+    <div class="col-md-6">
+        <div class="card table-card h-100">
+            <div class="p-3 border-bottom">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Dashboard Overview
+                </h5>
+            </div>
+            <div class="p-3">
+                <p class="text-muted mb-2">
+                    Welcome to the <strong>Result Committee Dashboard</strong>.
+                </p>
+                <ul class="mb-0 text-muted">
+                    <li>Manage event items and results</li>
+                    <li>Publish & edit results securely</li>
+                    <li>View college rankings</li>
+                    <li>Search published results</li>
+                </ul>
+            </div>
+        </div>
+    </div>
 
-        lastOrder = newOrder;
-    })
-    .catch(e => {
-        console.error(e);
-    });
-}
-document.addEventListener("DOMContentLoaded", () => {
-    loadRankings();
-    setInterval(loadRankings, 5000);
-});
-</script>
-{% endblock %}
+    <!-- System Status -->
+    <div class="col-md-6">
+        <div class="card table-card h-100">
+            <div class="p-3 border-bottom">
+                <h5 class="mb-0">
+                    <i class="fas fa-cogs me-2"></i>System Status
+                </h5>
+            </div>
+            <div class="p-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Result Module</span>
+                    <span class="badge bg-success">Active</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Ranking Engine</span>
+                    <span class="badge bg-success">Running</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Data Integrity</span>
+                    <span class="badge bg-success">OK</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
 {% endblock %}

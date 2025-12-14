@@ -1,0 +1,23 @@
+{% extends "organizer/base.html" %}
+{% block page_title %}College Ranking{% endblock %}
+
+{% block content %}
+<table class="table table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Rank</th>
+            <th>College</th>
+            <th>Total Points</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in rankings %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ row.team__college__college_name }}</td>
+            <td><span class="badge bg-success">{{ row.total_points }}</span></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,122 +1,42 @@
-{% extends "base.html" %}
-{% block title %}Add Results — {{ item.name }}{% endblock %}
+{% extends "organizer/base.html" %}
+{% block page_title %}Add Results – {{ item.name }}{% endblock %}
 
 {% block content %}
-
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="mb-0">
-            Add Results — <span class="text-primary">{{ item.name }}</span>
-        </h3>
-        <a href="{% url 'organizer_items' %}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-1"></i> Back
-        </a>
-    </div>
-
-    <div class="alert alert-info shadow-sm">
-        <strong>Scoring Rules:</strong><br>
-        1st = 5 pts, 2nd = 3 pts, 3rd = 1 pt<br>
-        Grades: A=3, B=2, C=1, D/E=0<br>
-        <em>You may select multiple teams for a position.</em>
-    </div>
-
-    <form method="post">
-        {% csrf_token %}
-
-        {% for pos, label in positions %}
-        <div class="card shadow-sm mb-3">
-
-            <!-- FIXED TEMPLATE CONDITION -->
-            <div class="card-header 
-                {% if pos == 1 %} bg-warning 
-                {% elif pos == 2 %} bg-secondary text-white 
-                {% else %} bg-info text-white 
-                {% endif %}
-            ">
-                <strong>{{ label }}</strong>
-            </div>
-
-            <div class="card-body">
-
-                <label class="form-label fw-semibold">Select Team(s)</label>
-
-                <select name="teams_{{ pos }}" class="form-select select-team" 
-                        data-pos="{{ pos }}" multiple>
-
-                    {% for t in teams %}
-                        <option value="{{ t.id }}">
-                            {{ t.college.college_name }} — ({{ t.students.count }} members)
-                        </option>
-                    {% endfor %}
+<form method="post">
+{% csrf_token %}
+<table class="table table-bordered">
+    <thead class="table-primary">
+        <tr>
+            <th>College</th>
+            <th>Position</th>
+            <th>Grade</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for team in teams %}
+        <tr>
+            <td>{{ team.college.college_name }}</td>
+            <td>
+                <select name="position_{{ team.id }}" class="form-select">
+                    <option value="">--</option>
+                    <option value="1">1st</option>
+                    <option value="2">2nd</option>
+                    <option value="3">3rd</option>
                 </select>
-
-                <!-- Grade section dynamically filled -->
-                <div id="grade-inner-{{ pos }}" class="mt-3"></div>
-
-            </div>
-        </div>
+            </td>
+            <td>
+                <select name="grade_{{ team.id }}" class="form-select">
+                    <option>A</option><option>B</option><option>C</option>
+                    <option>D</option><option>E</option>
+                </select>
+            </td>
+        </tr>
         {% endfor %}
+    </tbody>
+</table>
 
-        <div class="d-flex justify-content-end gap-2">
-            <a class="btn btn-outline-secondary" href="{% url 'organizer_items' %}">
-                Cancel
-            </a>
-            <button class="btn btn-primary" type="submit">
-                <i class="fas fa-check-circle me-1"></i> Submit Results
-            </button>
-        </div>
-    </form>
-</div>
-
-{% endblock %}
-
-
-
-{% block extra_js %}
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-
-    const gradeOptions = `
-        <option value="">Select grade</option>
-        <option value="A">A (3 pts)</option>
-        <option value="B">B (2 pts)</option>
-        <option value="C">C (1 pt)</option>
-        <option value="D">D (0)</option>
-        <option value="E">E (0)</option>
-    `;
-
-    document.querySelectorAll(".select-team").forEach(select => {
-
-        select.addEventListener("change", function () {
-            const pos = this.dataset.pos;
-            const container = document.getElementById(`grade-inner-${pos}`);
-            container.innerHTML = "";
-
-            const selectedTeams = Array.from(this.selectedOptions);
-            if (!selectedTeams.length) return;
-
-            selectedTeams.forEach(opt => {
-                const teamId = opt.value;
-                const teamName = opt.text;
-
-                const wrapper = document.createElement("div");
-                wrapper.className = "mb-2 p-2 border rounded d-flex justify-content-between align-items-center";
-
-                wrapper.innerHTML = `
-                    <div><strong>${teamName}</strong></div>
-                    <div style="min-width: 170px;">
-                        <select name="grade_${pos}_${teamId}" class="form-select form-select-sm" required>
-                            ${gradeOptions}
-                        </select>
-                    </div>
-                `;
-
-                container.appendChild(wrapper);
-            });
-
-        });
-    });
-
-});
-</script>
+<button class="btn btn-success">
+    <i class="fas fa-save"></i> Save Results
+</button>
+</form>
 {% endblock %}

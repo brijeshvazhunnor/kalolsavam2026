@@ -46,6 +46,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+MIDDLEWARE.insert(0, 'accounts.middleware.DisableBrowserCacheMiddleware')
+MIDDLEWARE.insert(0, 'accounts.middleware.NoCacheMiddleware')
 
 
 # ---------------------------------------------------------
