@@ -108,7 +108,7 @@ nav a.active {
 /* ================= HERO ================= */
 
 .hero {
-    background: rgba(255,255,255,0.96);
+    background-image: url("{% static 'img/ksd11.png' %}") ;
     margin: 60px auto;
     padding: 70px 40px;
     border-radius: 16px;
@@ -259,7 +259,7 @@ footer li {
         {% else %}
         <a href="{% url 'login' %}">Login</a>
         {% endif %}
-        <a href="#">Results</a>
+        <a href="{% url 'public_results' %}">Results</a>
         <a href="#">Schedule</a>
     </nav>
 </div>

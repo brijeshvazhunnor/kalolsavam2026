@@ -1,0 +1,42 @@
+<!-- OVERALL LEADERBOARD -->
+<tbody id="overall-body">
+{% for c in overall_colleges %}
+<tr>
+<td>{{ forloop.counter }}</td>
+<td>{{ c.team__college__college_name }}</td>
+<td class="text-end fw-bold">{{ c.total_points }}</td>
+</tr>
+{% endfor %}
+</tbody>
+
+<!-- TOP INDIVIDUAL -->
+<div id="individual-body">
+{% for s in individual_top %}
+<div class="list-group-item d-flex justify-content-between">
+<div>
+<strong>{{ s.team__students__name }}</strong><br>
+<small>{{ s.team__college__college_name }}</small>
+</div>
+<span class="badge bg-success">{{ s.total_points }}</span>
+</div>
+{% endfor %}
+</div>
+
+<!-- FULL RESULTS -->
+<tbody id="full-results-body">
+{% for r in full_results %}
+<tr>
+<td>{{ r.item.name }}</td>
+<td>{{ r.item.category }}</td>
+<td>{{ r.team.college.college_name }}</td>
+<td>
+{% for s in r.team.students.all %}
+{{ s.name }}{% if not forloop.last %}, {% endif %}
+{% endfor %}
+</td>
+<td>{{ r.get_position_display }}</td>
+<td>{{ r.grade }}</td>
+<td class="fw-bold text-end">{{ r.points }}</td>
+</tr>
+{% endfor %}
+</tbody>

@@ -1,0 +1,312 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Student Participation Summary | Kalolsavam 2026{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ================= PAGE BACKGROUND ================= */
+body {
+    background: url("{% static 'img/bgimg.png' %}") center / cover fixed no-repeat;
+}
+
+.page-wrapper {
+    background: linear-gradient(135deg, #f9f7f0 0%, #f0ede4 100%);
+    min-height: calc(100vh - 160px);
+    padding: 2rem 1.5rem;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar-card {
+    background: linear-gradient(135deg, rgba(255,255,255,.97), rgba(245,241,233,.98));
+    border: 2px solid rgba(212,175,55,.35);
+    border-radius: 18px;
+    box-shadow: 0 15px 35px rgba(0,0,0,.12);
+    width: 100%;
+    opacity: 0;
+    transform: translateX(-20px);
+    animation: sidebarFadeIn .6s ease-out forwards;
+    z-index: 5;
+}
+
+@keyframes sidebarFadeIn {
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Sticky on desktop */
+@media (min-width: 992px) {
+    .sidebar-card {
+        position: sticky;
+        top: 110px;
+    }
+}
+
+/* Sidebar header */
+.gradient-header {
+    background: linear-gradient(135deg, #1a1f2b, #2c3347);
+    padding: 1.8rem 1.2rem;
+    border-radius: 18px 18px 0 0;
+    border-bottom: 2px solid rgba(212,175,55,.4);
+}
+
+.gradient-header i {
+    font-size: 3rem;
+    color: #d4af37;
+}
+
+/* Sidebar nav */
+.sidebar-card .nav-link {
+    background: #fff;
+    border: 1px solid rgba(212,175,55,.25);
+    color: #1a1f2b !important;
+    font-weight: 600;
+    border-radius: 10px;
+    margin-bottom: .6rem;
+    transition: .3s;
+}
+
+.sidebar-card .nav-link:hover {
+    transform: translateX(6px);
+    border-color: #d4af37;
+}
+
+.sidebar-card .nav-link.active {
+    background: #170e25;
+    color: #fff !important;
+    border-color: transparent;
+}
+
+/* ================= MAIN CONTENT ================= */
+.main-header {
+    background: rgba(255,255,255,.96);
+    border: 1px solid rgba(212,175,55,.25);
+    border-radius: 16px;
+    padding: 1.6rem 2rem;
+    margin-bottom: 2rem;
+}
+
+.filter-card {
+    background: rgba(255,255,255,.95);
+    border: 1px solid rgba(212,175,55,.25);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* ================= TABLE ================= */
+.summary-card {
+    background: rgba(255,255,255,.97);
+    border-radius: 16px;
+    border: 1px solid rgba(212,175,55,.25);
+    overflow: hidden;
+}
+
+.summary-card .card-header {
+    background: linear-gradient(135deg, #1a1f2b, #2c3347);
+    color: #fff;
+    padding: 1.4rem 2rem;
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+}
+
+.pretty-table th {
+    font-weight: 600;
+    border-bottom: 2px solid rgba(212,175,55,.35);
+}
+
+.pretty-table td {
+    vertical-align: middle;
+}
+
+.badge-single { background: #0dcaf0; }
+.badge-group  { background: #ffc107; color: #222; }
+.badge-total  { background: #198754; }
+
+.participation-list {
+    padding-left: 1.2rem;
+    margin-bottom: 0;
+    font-size: .85rem;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 991px) {
+    .page-wrapper { padding: 1rem; }
+}
+</style>
+{% endblock %}
+
+{% block page_title_content %}
+Student Participation Summary
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid page-wrapper">
+    <div class="row">
+
+        <!-- ================= SIDEBAR ================= -->
+        <div class="col-lg-3 col-md-4 mb-4 d-flex">
+            <div class="sidebar-card">
+
+                <div class="gradient-header text-center d-flex justify-content-between align-items-center">
+                    <div class="w-100 text-center">
+                        <i class="fas fa-university mb-2"></i>
+                        <h5 class="text-white mb-0">{{ college.college_name|default:user.username }}</h5>
+                        <small class="text-white-50">College Administrator</small>
+                    </div>
+
+                    <!-- Mobile toggle -->
+                    <button class="btn btn-sm btn-outline-light d-lg-none ms-2"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#sidebarMenu">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+
+                <div id="sidebarMenu" class="collapse d-lg-block p-3">
+                    <a class="nav-link"
+                       href="{% url 'register_student' %}"
+                       data-route="register">
+                        <i class="fas fa-user-plus me-2"></i> Register Students
+                    </a>
+
+                    <a class="nav-link"
+                       href="{% url 'team_creation' %}"
+                       data-route="team">
+                        <i class="fas fa-users me-2"></i> Create Teams
+                    </a>
+
+                    <a class="nav-link"
+                       href="{% url 'student_summary' %}"
+                       data-route="student-summary">
+                        <i class="fas fa-chart-bar me-2"></i> Student Summary
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= MAIN CONTENT ================= -->
+        <div class="col-lg-9 col-md-8">
+
+            <div class="main-header">
+                <h4 class="mb-1">
+                    <i class="fas fa-user-graduate me-2"></i>
+                    Student Participation Overview
+                </h4>
+                <p class="text-muted mb-0">
+                    Individual & group event participation summary
+                </p>
+            </div>
+
+            <!-- FILTER -->
+            <form method="get" class="filter-card">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">Search Student</label>
+                        <input type="text" name="q" value="{{ q }}" class="form-control">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Category</label>
+                        <select name="category" class="form-select">
+                            <option value="">All Categories</option>
+                            {% for c in categories %}
+                                <option value="{{ c }}" {% if c == selected_category %}selected{% endif %}>
+                                    {{ c }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Item Type</label>
+                        <select name="item_type" class="form-select">
+                            <option value="">All</option>
+                            <option value="single" {% if selected_type == "single" %}selected{% endif %}>Single</option>
+                            <option value="group" {% if selected_type == "group" %}selected{% endif %}>Group</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2 d-grid">
+                        <button class="btn btn-dark">
+                            <i class="fas fa-filter me-1"></i> Apply
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- TABLE -->
+            <div class="summary-card">
+                <div class="card-header">
+                    <i class="fas fa-table me-2"></i> Participation Details
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table pretty-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Department</th>
+                                <th>Year</th>
+                                <th class="text-center">Single</th>
+                                <th class="text-center">Group</th>
+                                <th class="text-center">Total</th>
+                                <th>Participations</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for d in student_data %}
+                            <tr>
+                                <td class="fw-semibold">{{ d.student.name }}</td>
+                                <td>{{ d.student.department }}</td>
+                                <td class="text-center">Y{{ d.student.current_year }}</td>
+
+                                <td class="text-center"><span class="badge badge-single">{{ d.single }}</span></td>
+                                <td class="text-center"><span class="badge badge-group">{{ d.group }}</span></td>
+                                <td class="text-center"><span class="badge badge-total">{{ d.total }}</span></td>
+
+                                <td>
+                                    {% if d.teams %}
+                                        <ul class="participation-list">
+                                            {% for t in d.teams %}
+                                                <li>
+                                                    {{ t.item.name }}
+                                                    <span class="badge bg-light text-dark ms-1">
+                                                        {{ t.item.category }} / {{ t.item.item_type }}
+                                                    </span>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <span class="text-muted">No participation</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">
+                                    No students found
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const path = window.location.pathname;
+    document.querySelectorAll(".sidebar-card .nav-link").forEach(link => {
+        if (path.includes(link.dataset.route)) {
+            link.classList.add("active");
+        }
+    });
+});
+</script>
+{% endblock %}

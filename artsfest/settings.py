@@ -65,7 +65,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            BASE_DIR / 'templates',
+            BASE_DIR / 'templates''accounts',
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -212,3 +212,5 @@ NATAKAM_ITEMS = [
     "Natakam (Kannada)",
 ]
 MAX_NATAKAM = 2
+
+

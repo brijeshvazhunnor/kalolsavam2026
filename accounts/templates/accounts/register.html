@@ -6,17 +6,8 @@
 
 {% block extra_css %}
 <style>
-    /* College Dashboard Specific Styles */
-/*     
-    .college-dashboard {
-        padding: 2rem 0;
-        background: linear-gradient(135deg, #f9f7f0 0%, #f0ede4 100%);
-        min-height: calc(100vh - 180px);
-    } */
-    
-    /* Fixed Background Image */
     body {
-        background-image: url("{% static 'img/bgimg.png' %}");
+        background: url("{% static 'img/bgimg.png' %}");
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
@@ -437,7 +428,7 @@
             <div class="sidebar-card h-100">
                 <div class="gradient-header text-center">
                     <i class="fas fa-university"></i>
-                    <h5>{{ user.first_name|default:user.username }}</h5>
+                    <h5 class="text-white mb-0">{{ college.college_name|default:user.username }}</h5>
                     <p class="small opacity-75">College Administrator</p>
                 </div>
 
@@ -458,7 +449,7 @@
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'student_summary' %}">
                                 <i class="fas fa-list"></i>Student List
                             </a>
                         </li>

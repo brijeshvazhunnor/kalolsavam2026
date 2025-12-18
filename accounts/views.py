@@ -149,8 +149,12 @@ def register_student(request):
         messages.success(request, "Student registered successfully!")
         return redirect("register_student")
 
+    college = College.objects.filter(username=request.user.username).first()
     students = Student.objects.filter(college=college).order_by("-id")
-    return render(request, "accounts/register.html", {"students": students})
+    return render(request, "accounts/register.html", {
+        "students": students,
+        'college': college,
+        })
 
 
 #-----------------------------Edit Student______________________
@@ -365,6 +369,7 @@ def team_creation(request):
         .prefetch_related("students")
         .order_by("item__category", "item__name")
     )
+    college = College.objects.filter(username=request.user.username).first()
 
     return render(
         request,
@@ -378,8 +383,10 @@ def team_creation(request):
             "category_limits": category_limits,
             "natakam_count": natakam_count,
             "max_natakam": max_natakam,
+            "college": college,
         },
     )
+    
 
 
 @login_required
@@ -476,13 +483,60 @@ def delete_team(request, team_id):
 
 
 
-
-
 @login_required
-def admin_dashboard(request):
-    if request.user.role != "admin":
+def student_summary(request):
+    if request.user.role != "college":
         return redirect("home")
-    return render(request, "admin/dashboard.html")
+
+    category = request.GET.get("category", "")
+    item_type = request.GET.get("item_type", "")
+    q = request.GET.get("q", "")
+
+    students = Student.objects.filter(college__username=request.user.username)
+
+    student_data = []
+
+    for student in students:
+        teams = student.team_set.select_related("item")
+
+        if category:
+            teams = teams.filter(item__category=category)
+
+        if item_type:
+            teams = teams.filter(item__item_type=item_type)
+
+        single_count = teams.filter(item__item_type="single").count()
+        group_count = teams.filter(item__item_type="group").count()
+
+        if q and q.lower() not in student.name.lower():
+            continue
+
+        student_data.append({
+            "student": student,
+            "single": single_count,
+            "group": group_count,
+            "total": single_count + group_count,
+            "teams": teams
+        })
+
+    college = College.objects.filter(username=request.user.username).first()
+    categories = Item.objects.values_list("category", flat=True).distinct()
+
+    return render(request, "college/student_summary.html", {
+        "student_data": student_data,
+        "categories": categories,
+        "selected_category": category,
+        "selected_type": item_type,
+        'college': college,
+        "q": q,
+    })
+
+
+
+
+
+
+
 
 
 
@@ -692,3 +746,286 @@ def organizer_student_results(request):
         "query": query,
         "sort_by": sort_by,
     })
+
+
+#overall_result_views.py
+#Leaderboard
+#pointTable
+
+from django.db.models import Sum, Q
+from django.shortcuts import render
+from .models import Result, Item
+
+
+def public_results(request):
+    category = request.GET.get("category", "").strip()
+    q = request.GET.get("q", "").strip()
+
+    # ---------------------------
+    # Overall College Leaderboard
+    # ---------------------------
+    overall_colleges = (
+        Result.objects
+        .filter(is_deleted=False)
+        .values("team__college__college_name")
+        .annotate(total_points=Sum("points"))
+        .order_by("-total_points")
+    )
+
+    # ---------------------------
+    # Category-wise College Leaderboard
+    # ---------------------------
+    category_colleges = []
+    if category:
+        category_colleges = (
+            Result.objects
+            .filter(is_deleted=False, item__category__iexact=category)
+            .values("team__college__college_name")
+            .annotate(total_points=Sum("points"))
+            .order_by("-total_points")
+        )
+
+    # ---------------------------
+    # Top Individual Performers (Single Items)
+    # ---------------------------
+    individual_top = (
+        Result.objects
+        .filter(is_deleted=False, item__item_type="single")
+        .values(
+            "team__students__name",
+            "team__college__college_name"
+        )
+        .annotate(total_points=Sum("points"))
+        .order_by("-total_points")[:5]
+    )
+
+    # ---------------------------
+    # FULL RESULT LIST
+    # ---------------------------
+    full_results = (
+        Result.objects
+        .filter(is_deleted=False)
+        .select_related("item", "team__college")
+        .prefetch_related("team__students")
+        .order_by("-created_at")
+    )
+
+    # Search
+    if q:
+        full_results = full_results.filter(
+            Q(item__name__icontains=q) |
+            Q(item__category__icontains=q) |
+            Q(team__college__college_name__icontains=q) |
+            Q(team__students__name__icontains=q)
+        )
+
+    categories = Item.objects.values_list("category", flat=True).distinct()
+
+    # ---------------------------
+    # AJAX LIVE REFRESH
+    # ---------------------------
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return render(request, "results_live.html", {
+            "overall_colleges": overall_colleges,
+            "individual_top": individual_top,
+            "full_results": full_results,
+        })
+
+    return render(request, "public_results.html", {
+        "overall_colleges": overall_colleges,
+        "category_colleges": category_colleges,
+        "categories": categories,
+        "selected_category": category,
+        "individual_top": individual_top,
+        "full_results": full_results,
+        "q": q,
+    })
+
+
+
+#admin Dashboardddd
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
+
+from .models import SiteSetting, Brochure
+
+User = get_user_model()
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect
+from django.contrib import messages
+
+def admin_required(view_func):
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated or request.user.role != "admin":
+            messages.error(request, "Admin access only")
+            return redirect("login")
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+# -----------------------
+# ADMIN ACCESS GUARD
+# -----------------------
+def admin_only(user):
+    return user.is_authenticated and user.role == "admin"
+
+
+# -----------------------
+# ADMIN DASHBOARD
+# -----------------------
+@login_required
+def admin_dashboard(request):
+    if not admin_only(request.user):
+        return redirect("home")
+
+    return render(request, "admin/dashboard.html")
+
+
+# -----------------------
+# USER MANAGEMENT
+# -----------------------
+@login_required
+def admin_users(request):
+    if getattr(request.user, "role", None) != "admin":
+        messages.error(request, "Access denied.")
+        return redirect("home")
+
+    users = CustomUser.objects.all().order_by("role", "username")
+
+    # Attach college name for college users
+    college_map = {
+        c.username: c.college_name
+        for c in College.objects.all()
+    }
+
+    for u in users:
+        if u.role == "college":
+            u.college_display = college_map.get(u.username, "—")
+        else:
+            u.college_display = "—"
+
+    return render(request, "admin/users.html", {
+        "users": users
+    })
+
+
+@login_required
+def admin_add_user(request):
+    if not admin_only(request.user):
+        return redirect("home")
+
+    if request.method == "POST":
+        User.objects.create(
+            username=request.POST["username"],
+            password=make_password(request.POST["password"]),
+            role=request.POST["role"],
+            is_active=True,
+        )
+        messages.success(request, "User created successfully")
+        return redirect("admin_users")
+
+    return render(request, "admin/add_user.html")
+
+
+@login_required
+def admin_edit_user(request, user_id):
+    if not admin_only(request.user):
+        return redirect("home")
+
+    user = get_object_or_404(User, id=user_id)
+
+    if request.method == "POST":
+        user.username = request.POST["username"]
+
+        if request.POST.get("password"):
+            user.password = make_password(request.POST["password"])
+
+        user.role = request.POST["role"]
+        user.save()
+        messages.success(request, "User updated")
+        return redirect("admin_users")
+
+    return render(request, "admin/edit_user.html", {"u": user})
+
+
+@login_required
+def admin_toggle_user(request, user_id):
+    if getattr(request.user, "role", None) != "admin":
+        messages.error(request, "Access denied.")
+        return redirect("admin_dashboard")
+
+    user = get_object_or_404(CustomUser, id=user_id)
+
+    # Prevent disabling yourself
+    if user == request.user:
+        messages.warning(request, "You cannot disable your own account.")
+        return redirect("admin_users")
+
+    user.is_active = not user.is_active
+    user.save()
+
+    status = "activated" if user.is_active else "deactivated"
+    messages.success(request, f"User '{user.username}' {status} successfully.")
+
+    return redirect("admin_users")
+
+
+
+# -----------------------
+# SITE SETTINGS
+# -----------------------
+@login_required
+def admin_site_settings(request):
+    if not admin_only(request.user):
+        return redirect("home")
+
+    setting, _ = SiteSetting.objects.get_or_create(id=1)
+
+    if request.method == "POST":
+        setting.allow_student_registration = "allow" in request.POST
+        setting.save()
+        messages.success(request, "Settings updated")
+
+    return render(request, "admin/settings.html", {"setting": setting})
+
+
+# -----------------------
+# BROCHURES
+# -----------------------
+@login_required
+def admin_brochures(request):
+    if not admin_only(request.user):
+        return redirect("home")
+
+    brochures = Brochure.objects.all()
+    return render(request, "admin/brochures.html", {"brochures": brochures})
+
+
+@login_required
+def admin_add_brochure(request):
+    if not admin_only(request.user):
+        return redirect("home")
+
+    if request.method == "POST":
+        Brochure.objects.create(
+            title=request.POST["title"],
+            image=request.FILES["image"]
+        )
+        messages.success(request, "Brochure uploaded")
+        return redirect("admin_brochures")
+
+    return render(request, "admin/add_brochure.html")
+
+
+# -----------------------
+# PUBLIC BROCHURES
+# -----------------------
+def public_brochures(request):
+    brochures = Brochure.objects.filter(is_active=True)
+    return render(request, "public/brochures.html", {"brochures": brochures})

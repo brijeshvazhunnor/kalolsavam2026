@@ -145,3 +145,32 @@ class Result(models.Model):
 
     def __str__(self):
         return f"{self.item.name} — {self.team.college.college_name}"
+
+
+#admin Models
+from django.db import models
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+# -------------------------
+# GLOBAL SITE SETTINGS
+# -------------------------
+class SiteSetting(models.Model):
+    allow_student_registration = models.BooleanField(default=True)
+
+    def __str__(self):
+        return "Global Site Settings"
+
+
+# -------------------------
+# BROCHURES
+# -------------------------
+class Brochure(models.Model):
+    title = models.CharField(max_length=255)
+    image = models.ImageField(upload_to="brochures/")
+    is_active = models.BooleanField(default=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title

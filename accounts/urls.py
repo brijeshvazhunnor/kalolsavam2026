@@ -11,7 +11,6 @@ urlpatterns = [
 
     # Dashboards (role based)
     path("organizer/dashboard/", views.organizer_dashboard, name="organizer_dashboard"),
-    path("admin/dashboard/", views.admin_dashboard, name="admin_dashboard"),
     path("college/dashboard/", views.college_dashboard, name="college_dashboard"),
 
 
@@ -21,6 +20,8 @@ urlpatterns = [
     path("team/create/", views.team_creation, name="team_creation"),
     path("team/<int:team_id>/edit/", views.edit_team, name="edit_team"),
     path("team/delete/<int:team_id>/", views.delete_team, name="delete_team"),
+    path("college/student-summary/", views.student_summary, name="student_summary"),
+    
 
     #result_committee
     path("organizer/dashboard/", views.organizer_dashboard, name="organizer_dashboard"),
@@ -39,4 +40,17 @@ urlpatterns = [
 
     # Student result search
     path("organizer/student-results/", views.organizer_student_results, name="organizer_student_results"),
+
+    #PublicResultssss
+    path("results/", views.public_results, name="public_results"),
+
+    # ADMIN (CUSTOM DASHBOARD)
+    path("admin-panel/", views.admin_dashboard, name="admin_dashboard"),
+    path("admin-panel/users/", views.admin_users, name="admin_users"),
+    path("admin-panel/users/add/", views.admin_add_user, name="admin_add_user"),
+    path("admin-panel/users/<int:user_id>/edit/", views.admin_edit_user, name="admin_edit_user"),
+    path("admin-panel/settings/", views.admin_site_settings, name="admin_settings"),
+    path("admin-panel/brochures/", views.admin_brochures, name="admin_brochures"),
+    path("admin-panel/brochures/add/", views.admin_add_brochure, name="admin_add_brochure"),
+    path("admin-panel/users/toggle/<int:user_id>/",views.admin_toggle_user,name="admin_toggle_user"),
 ]

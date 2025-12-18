@@ -6,7 +6,14 @@
 {% block extra_css %}
 <style>
     /* Team Creation Specific Styles */
-    
+    body {
+        background: url("{% static 'img/bgimg.png' %}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }
+
     .page-wrapper {
         background: linear-gradient(135deg, #f9f7f0 0%, #f0ede4 100%);
         min-height: calc(100vh - 180px);
@@ -242,7 +249,7 @@
     }
     
     .fancy-select {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23d4af37' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+        background-image: url("{% static 'img/whitishBG.png' %}");
         background-repeat: no-repeat;
         background-position: right 1rem center;
         background-size: 16px;
@@ -554,8 +561,8 @@
             <div class="sidebar-card">
                 <div class="gradient-header text-center">
                     <i class="fas fa-university"></i>
-                    <h5>{{ user.username }}</h5>
-                    <p class="small opacity-75">College Administrator</p>
+                    <h5 class="text-white mb-0">{{ college.college_name|default:user.username }}</h5>
+                     <p class="small opacity-75">College Administrator</p>
                 </div>
                 <div class="nav-container">
                     <ul class="nav nav-pills flex-column">
@@ -569,12 +576,9 @@
                                 <i class="fas fa-users"></i>Create Teams
                             </a>
                         </li>
-                    </ul>
-                    <hr class="my-3">
-                    <ul class="nav nav-pills flex-column">
                         <li class="nav-item">
-                            <a class="nav-link text-danger" href="{% url 'logout' %}">
-                                <i class="fas fa-sign-out-alt"></i>Logout
+                            <a class="nav-link" href="{% url 'student_summary' %}">
+                                <i class="fas fa-list"></i>Student List
                             </a>
                         </li>
                     </ul>
