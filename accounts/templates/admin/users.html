@@ -64,6 +64,13 @@
                onclick="return confirm('Toggle user status?')">
               Toggle
             </a>
+            <a href="{% url 'admin_delete_user' u.id %}"
+              class="btn btn-sm btn-outline-danger"
+              onclick="return confirm(
+                '⚠️ This will permanently delete the user and all related data.\n\nAre you sure?'
+              )">
+              Delete
+            </a>
           </td>
         </tr>
         {% endfor %}

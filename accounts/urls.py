@@ -53,4 +53,5 @@ urlpatterns = [
     path("admin-panel/brochures/", views.admin_brochures, name="admin_brochures"),
     path("admin-panel/brochures/add/", views.admin_add_brochure, name="admin_add_brochure"),
     path("admin-panel/users/toggle/<int:user_id>/",views.admin_toggle_user,name="admin_toggle_user"),
+    path("admin-panel/users/<int:user_id>/delete/",views.admin_delete_user,name="admin_delete_user"),
 ]

@@ -20,15 +20,34 @@
 
     <div class="mb-3">
       <label class="form-label">Role</label>
-      <select name="role" class="form-select">
+      <select name="role" class="form-select" id="roleSelect">
         <option value="college">College</option>
         <option value="organizer">Organizer</option>
         <option value="admin">Admin</option>
       </select>
     </div>
 
+    <div id="collegeFields">
+      <div class="mb-3">
+        <label class="form-label">College Name</label>
+        <input name="college_name" class="form-control">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">District</label>
+        <input name="district" class="form-control">
+      </div>
+    </div>
+
     <button class="btn btn-primary">Create User</button>
     <a href="{% url 'admin_users' %}" class="btn btn-secondary ms-2">Cancel</a>
   </form>
 </div>
+
+<script>
+document.getElementById("roleSelect").addEventListener("change", function () {
+  document.getElementById("collegeFields").style.display =
+    this.value === "college" ? "block" : "none";
+});
+</script>
 {% endblock %}

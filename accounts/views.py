@@ -1,183 +1,167 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .forms import LoginForm, RegisterForm, StudentForm, ItemForm, RegistrationForm
-from .models import Student, Item, Registration, College, Team
-
-
-# ---------------- Homepage ----------------
-def home(request):
-    return render(request, 'accounts/home.html')
-
-
-from django.contrib.auth.decorators import login_required
+from django.conf import settings
+from django.db.models import Count, Sum, Q
+from django.utils.timezone import now
 from django.views.decorators.cache import never_cache
 
-# ---------------- User Registration ----------------
+from .forms import (
+    LoginForm, RegisterForm, StudentForm,
+    ItemForm, RegistrationForm
+)
+from .models import (
+    Student, Item, Registration,
+    College, Team, Result,
+    CustomUser, SiteSetting, Brochure
+)
+from .utils import calculate_points
+
+#homeeeeee
+def home(request):
+    return render(request, "accounts/home.html")
+
+#👤 USER REGISTER
 def user_register(request):
     if request.method == "POST":
         form = RegisterForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, "Account created successfully! Please log in.")
+            messages.success(request, "Account created successfully!")
             return redirect("login")
     else:
         form = RegisterForm()
     return render(request, "accounts/register.html", {"form": form})
 
 
-# ---------------- User Login ----------------
-from django.contrib.auth import login
+#🔐 LOGIN
+from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.shortcuts import render, redirect
-from accounts.models import College, CustomUser
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.cache import never_cache
 
 
 def user_login(request):
+    """
+    Single source of truth for login.
+    DO NOT create any other login() view.
+    """
     if request.method == "POST":
-        username = request.POST.get("username").strip()
-        password = request.POST.get("password").strip()
+        username = request.POST.get("username", "").strip()
+        password = request.POST.get("password", "").strip()
 
-        # Check if the login is for a college user
-        college = College.objects.filter(username=username, password=password).first()
+        if not username or not password:
+            messages.error(request, "Both username and password are required.")
+            return render(request, "accounts/login.html")
 
-        if college:
-            # Convert College login → Django session using CustomUser
-            user = CustomUser.objects.filter(username=username).first()
-            if not user:
-                # If CustomUser does not exist, create it (role = college)
-                user = CustomUser.objects.create_user(
-                    username=username,
-                    password=password,
-                    role="college",
-                    college_name=college.college_name
-                )
+        user = authenticate(
+            request,
+            username=username,
+            password=password,
+        )
+
+        if user is not None:
+            if not user.is_active:
+                messages.error(request, "Your account is disabled.")
+                return render(request, "accounts/login.html")
+
             login(request, user)
-            return redirect("college_dashboard")
 
-        # If not college → normal Django authentication
-        user = authenticate(request, username=username, password=password)
-        if user:
-            login(request, user)
-            if user.role == "organizer":
+            # 🔀 Role-based redirect
+            if user.role == "college":
+                return redirect("college_dashboard")
+            elif user.role == "organizer":
                 return redirect("organizer_dashboard")
-            if user.role == "admin":
+            elif user.role == "admin":
                 return redirect("admin_dashboard")
+
             return redirect("home")
 
-        messages.error(request, "Invalid username or password")
-        return redirect("login")
+        messages.error(request, "Invalid username or password.")
 
     return render(request, "accounts/login.html")
 
 
 
-
-
-# ---------------- Logout ----------------
-from django.contrib.auth import logout
-from django.shortcuts import redirect
-
+#🚪 LOGOUT
 def user_logout(request):
     logout(request)
-    request.session.flush()  # 🔥 VERY IMPORTANT
+    request.session.flush()
     return redirect("login")
 
 
-
-# ---------------- College Dashboard ----------------
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.cache import never_cache
-
+#🎓 COLLEGE DASHBOARD
 @login_required
 def college_dashboard(request):
     if request.user.role != "college":
         return redirect("home")
 
-    # Get the College record of this logged college user
-    college = College.objects.filter(username=request.user.username).first()
-    if not college:
-        messages.error(request, "College profile missing.")
-        return redirect("home")
+    college = get_object_or_404(College, user=request.user)
 
     if request.method == "POST" and "add_student" in request.POST:
         form = StudentForm(request.POST, request.FILES)
         if form.is_valid():
             student = form.save(commit=False)
-            student.college = college     # ✔ correct college assignment
+            student.college = college
             student.save()
-            messages.success(request, "Student added successfully!")
+            messages.success(request, "Student added")
             return redirect("college_dashboard")
     else:
         form = StudentForm()
 
-    students = Student.objects.filter(college=college)
-    items = Item.objects.all()
-
     return render(request, "accounts/register.html", {
         "student_form": form,
-        "students": students,
-        "items": items,
+        "students": Student.objects.filter(college=college),
+        "items": Item.objects.all(),
+        "college": college,
     })
 
 
-# ---------------- Register Student (from sidebar page) ----------------
+#🧑‍🎓 REGISTER STUDENT
 @login_required
 def register_student(request):
     if request.user.role != "college":
         return redirect("home")
 
-    college = College.objects.filter(username=request.user.username).first()
-    if not college:
-        messages.error(request, "College profile missing.")
-        return redirect("home")
+    college = get_object_or_404(College, user=request.user)
 
     if request.method == "POST":
         Student.objects.create(
             college=college,
-            name=request.POST.get("name"),
-            id_card=request.POST.get("id_card"),
-            date_of_birth=request.POST.get("date_of_birth"),
-            department=request.POST.get("department"),
-            year_of_joining=request.POST.get("year_of_joining"),
-            current_year=request.POST.get("current_year"),
-            id_card_file=request.FILES.get("id_card_file")
+            name=request.POST["name"],
+            id_card=request.POST["id_card"],
+            date_of_birth=request.POST["date_of_birth"],
+            department=request.POST["department"],
+            year_of_joining=request.POST["year_of_joining"],
+            current_year=request.POST["current_year"],
+            id_card_file=request.FILES.get("id_card_file"),
         )
-        messages.success(request, "Student registered successfully!")
+        messages.success(request, "Student registered")
         return redirect("register_student")
 
-    college = College.objects.filter(username=request.user.username).first()
-    students = Student.objects.filter(college=college).order_by("-id")
     return render(request, "accounts/register.html", {
-        "students": students,
-        'college': college,
-        })
+        "students": Student.objects.filter(college=college),
+        "college": college,
+    })
 
 
-#-----------------------------Edit Student______________________
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-
+#✏️ EDIT STUDENT
 @login_required
 def edit_student(request, student_id):
     student = get_object_or_404(Student, id=student_id)
 
     if request.method == "POST":
-        student.name = request.POST.get("name")
-        student.id_card = request.POST.get("id_card")
-        student.date_of_birth = request.POST.get("date_of_birth")
-        student.department = request.POST.get("department")
-        student.current_year = request.POST.get("current_year")
-        student.year_of_joining = request.POST.get("year_of_joining")
+        for field in [
+            "name", "id_card", "date_of_birth",
+            "department", "current_year", "year_of_joining"
+        ]:
+            setattr(student, field, request.POST.get(field))
 
         if request.FILES.get("id_card_file"):
-            student.id_card_file = request.FILES.get("id_card_file")
+            student.id_card_file = request.FILES["id_card_file"]
 
         student.save()
-        messages.success(request, "Student details updated successfully!")
+        messages.success(request, "Student updated")
         return redirect("register_student")
 
     return render(request, "accounts/edit_student.html", {"student": student})
@@ -185,218 +169,58 @@ def edit_student(request, student_id):
 
 
 
-# ---------------- Create Team ----------------
-# views.py
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from django.conf import settings
 
-from .models import College, Student, Item, Team
-
-
+#👥 TEAM CREATION (FIXED)
 @login_required
 def team_creation(request):
-    """Create team with:
-       - per-student single/group limits
-       - per-category team limits
-       - special Natakam sub-limit inside Drishyanatakolsavam
-    """
     if request.user.role != "college":
-        messages.error(request, "Only college users can create teams.")
         return redirect("home")
 
-    college = get_object_or_404(College, username=request.user.username)
+    college = get_object_or_404(College, user=request.user)
 
-    students = Student.objects.filter(college=college).order_by("name")
-    items = Item.objects.all().order_by("category", "name")
-    categories = (
-        Item.objects.values_list("category", flat=True)
-        .distinct()
-        .order_by("category")
-    )
+    students = Student.objects.filter(college=college)
+    items = Item.objects.all()
+    categories = Item.objects.values_list("category", flat=True).distinct()
 
-    # Items that already have a team for this college
-    existing_item_ids = list(
-        Team.objects.filter(college=college).values_list("item_id", flat=True)
-    )
-
-    # ---------- CATEGORY LIMIT INFO FOR UI ----------
-    # Expected in settings.py:
-    # CATEGORY_LIMITS = {
-    #   "sahithyolsavam": 27,
-    #   "chithrolsavam": 9,
-    #   "sangeetholsavam": 17,
-    #   "nritholsavam": 12,
-    #   "drishyanatakolsavam": 8,
-    # }
-    category_limits_cfg = getattr(settings, "CATEGORY_LIMITS", {})
-    category_limits = []
-
-    for key, limit in category_limits_cfg.items():
-        used = Team.objects.filter(
-            college=college,
-            category__iexact=key,
-        ).count()
-        category_limits.append(
-            {
-                "key": key,
-                "label": key.capitalize(),
-                "used": used,
-                "limit": limit,
-                "remaining": max(limit - used, 0),
-                "percent": (used / limit * 100) if limit > 0 else 0,
-            }
-        )
-
-    # Natakam special info for UI
-    natakam_items = getattr(settings, "NATAKAM_ITEMS", [])
-    max_natakam = getattr(settings, "MAX_NATAKAM", 2)
-    natakam_count = Team.objects.filter(
-        college=college,
-        item__name__in=natakam_items,
-    ).count()
-    # ------------------------------------------------
+    existing_item_ids = Team.objects.filter(
+        college=college
+    ).values_list("item_id", flat=True)
 
     if request.method == "POST":
-        item_id = request.POST.get("item")
+        item = get_object_or_404(Item, id=request.POST.get("item"))
         selected_students = request.POST.getlist("students")
 
-        if not item_id:
-            messages.error(request, "Please select an event item.")
-            return redirect("team_creation")
-
-        item = get_object_or_404(Item, id=item_id)
-        category = item.category.lower()
-
-        # 1️⃣ Team duplicate check
         if Team.objects.filter(college=college, item=item).exists():
-            messages.error(
-                request,
-                f"You already created a team for '{item.name}'. Edit it below.",
-            )
+            messages.error(request, "Team already exists")
             return redirect("team_creation")
 
-        # 2️⃣ Category limit check
-        current_category_count = Team.objects.filter(
-            college=college,
-            category__iexact=category,
-        ).count()
-        allowed_limit = category_limits_cfg.get(category, 99999)
-
-        if current_category_count >= allowed_limit:
-            messages.error(
-                request,
-                f"Category limit reached! You can create only {allowed_limit} "
-                f"teams in {item.category}."
-            )
-            return redirect("team_creation")
-
-        # 3️⃣ Natakam sub-limit inside Drishyanatakolsavam
-        if category == "drishyanatakolsavam" and item.name in natakam_items:
-            if natakam_count >= max_natakam:
-                messages.error(
-                    request,
-                    "You can create only "
-                    f"{max_natakam} Natakam teams "
-                    f"({', '.join(natakam_items)}).",
-                )
-                return redirect("team_creation")
-
-        # 4️⃣ No student selected
-        if not selected_students:
-            messages.error(request, "Please select at least one student.")
-            return redirect("team_creation")
-
-        # 5️⃣ Max participants for the item
-        if len(selected_students) > item.max_participants:
-            messages.error(
-                request,
-                f"Maximum {item.max_participants} students allowed for "
-                f"'{item.name}'."
-            )
-            return redirect("team_creation")
-
-        # 6️⃣ Per-student single/group limits
-        single_limit = 4
-        group_limit = 2
-
-        for student_id in selected_students:
-            student = Student.objects.get(id=student_id)
-
-            single_count = Team.objects.filter(
-                college=college,
-                students=student,
-                item__item_type="single",
-            ).count()
-
-            group_count = Team.objects.filter(
-                college=college,
-                students=student,
-                item__item_type="group",
-            ).count()
-
-            if item.item_type == "single" and single_count >= single_limit:
-                messages.error(
-                    request,
-                    f"❌ {student.name} already reached the limit of "
-                    f"{single_limit} single items.",
-                )
-                return redirect("team_creation")
-
-            if item.item_type == "group" and group_count >= group_limit:
-                messages.error(
-                    request,
-                    f"❌ {student.name} already reached the limit of "
-                    f"{group_limit} group items.",
-                )
-                return redirect("team_creation")
-
-        # 7️⃣ CREATE TEAM — all validations passed
         team = Team.objects.create(
             college=college,
             item=item,
             category=item.category,
         )
         team.students.set(selected_students)
-        messages.success(request, f"Team for '{item.name}' created successfully.")
+        messages.success(request, "Team created")
         return redirect("team_creation")
 
-    # Load teams for UI
-    teams = (
-        Team.objects.filter(college=college)
-        .select_related("item")
-        .prefetch_related("students")
-        .order_by("item__category", "item__name")
-    )
-    college = College.objects.filter(username=request.user.username).first()
-
-    return render(
-        request,
-        "team/create_team.html",
-        {
-            "students": students,
-            "items": items,
-            "categories": categories,
-            "teams": teams,
-            "existing_item_ids": existing_item_ids,
-            "category_limits": category_limits,
-            "natakam_count": natakam_count,
-            "max_natakam": max_natakam,
-            "college": college,
-        },
-    )
-    
+    return render(request, "team/create_team.html", {
+        "students": students,
+        "items": items,
+        "categories": categories,
+        "teams": Team.objects.filter(college=college),
+        "existing_item_ids": existing_item_ids,
+        "college": college,
+    })
 
 
+#edit team
 @login_required
 def edit_team(request, team_id):
-    """Edit team with same student limit rules (single/group) kept."""
     if request.user.role != "college":
         messages.error(request, "Only college users can edit teams.")
         return redirect("home")
 
-    college = get_object_or_404(College, username=request.user.username)
+    college = get_object_or_404(College, user=request.user)
     team = get_object_or_404(Team, id=team_id, college=college)
     item = team.item
 
@@ -410,8 +234,7 @@ def edit_team(request, team_id):
         if len(selected_students) > item.max_participants:
             messages.error(
                 request,
-                f"Maximum {item.max_participants} participants allowed for "
-                f"'{item.name}'.",
+                f"Maximum {item.max_participants} participants allowed for '{item.name}'."
             )
             return redirect("team_creation")
 
@@ -444,94 +267,91 @@ def edit_team(request, team_id):
             if item.item_type == "single" and single_count >= single_limit:
                 messages.error(
                     request,
-                    f"❌ {student.name} already reached the limit of "
-                    f"{single_limit} single items.",
+                    f"{student.name} already reached {single_limit} single items."
                 )
                 return redirect("team_creation")
 
             if item.item_type == "group" and group_count >= group_limit:
                 messages.error(
                     request,
-                    f"❌ {student.name} already reached the limit of "
-                    f"{group_limit} group items.",
+                    f"{student.name} already reached {group_limit} group items."
                 )
                 return redirect("team_creation")
 
         team.students.set(selected_students)
-        messages.success(request, f"Team for '{item.name}' updated successfully.")
+        messages.success(request, f"Team '{item.name}' updated successfully.")
         return redirect("team_creation")
 
     return redirect("team_creation")
 
 
 
-
+#🗑️ DELETE TEAM
 @login_required
 def delete_team(request, team_id):
-    """Delete a team belonging to this college."""
-    if request.user.role != "college":
-        messages.error(request, "Only college users can delete teams.")
-        return redirect("home")
-
-    college = get_object_or_404(College, username=request.user.username)
+    college = get_object_or_404(College, user=request.user)
     team = get_object_or_404(Team, id=team_id, college=college)
-    item_name = team.item.name
     team.delete()
-    messages.success(request, f"Team for '{item_name}' deleted successfully.")
+    messages.success(request, "Team deleted")
     return redirect("team_creation")
 
 
 
-
+#📊 STUDENT SUMMARY (FIXED)
 @login_required
 def student_summary(request):
     if request.user.role != "college":
         return redirect("home")
 
-    category = request.GET.get("category", "")
-    item_type = request.GET.get("item_type", "")
-    q = request.GET.get("q", "")
+    college = get_object_or_404(College, user=request.user)
 
-    students = Student.objects.filter(college__username=request.user.username)
+    # 🔎 GET FILTERS
+    q = request.GET.get("q", "").strip()
+    category = request.GET.get("category", "").strip()
+    item_type = request.GET.get("item_type", "").strip()
+
+    students = Student.objects.filter(college=college)
+
+    # 🔍 SEARCH FILTER (student name)
+    if q:
+        students = students.filter(name__icontains=q)
 
     student_data = []
 
     for student in students:
         teams = student.team_set.select_related("item")
 
+        # 🎯 CATEGORY FILTER
         if category:
             teams = teams.filter(item__category=category)
 
+        # 🎯 ITEM TYPE FILTER
         if item_type:
             teams = teams.filter(item__item_type=item_type)
 
-        single_count = teams.filter(item__item_type="single").count()
-        group_count = teams.filter(item__item_type="group").count()
+        single = teams.filter(item__item_type="single").count()
+        group = teams.filter(item__item_type="group").count()
 
-        if q and q.lower() not in student.name.lower():
+        # ❗ Skip students with no teams after filtering
+        if not teams.exists():
             continue
 
         student_data.append({
             "student": student,
-            "single": single_count,
-            "group": group_count,
-            "total": single_count + group_count,
-            "teams": teams
+            "single": single,
+            "group": group,
+            "total": single + group,
+            "teams": teams,
         })
-
-    college = College.objects.filter(username=request.user.username).first()
-    categories = Item.objects.values_list("category", flat=True).distinct()
 
     return render(request, "college/student_summary.html", {
         "student_data": student_data,
-        "categories": categories,
+        "categories": Item.objects.values_list("category", flat=True).distinct(),
         "selected_category": category,
         "selected_type": item_type,
-        'college': college,
         "q": q,
+        "college": college,
     })
-
-
 
 
 
@@ -844,41 +664,30 @@ def public_results(request):
 
 
 #admin Dashboardddd
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 
-from .models import SiteSetting, Brochure
+from .models import College, SiteSetting, Brochure
 
 User = get_user_model()
 
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect
-from django.contrib import messages
+def admin_only(user):
+    return user.is_authenticated and user.role == "admin"
+
 
 def admin_required(view_func):
     def wrapper(request, *args, **kwargs):
-        if not request.user.is_authenticated or request.user.role != "admin":
+        if not admin_only(request.user):
             messages.error(request, "Admin access only")
             return redirect("login")
         return view_func(request, *args, **kwargs)
     return wrapper
 
 
-# -----------------------
-# ADMIN ACCESS GUARD
-# -----------------------
-def admin_only(user):
-    return user.is_authenticated and user.role == "admin"
-
-
-# -----------------------
-# ADMIN DASHBOARD
-# -----------------------
 @login_required
 def admin_dashboard(request):
     if not admin_only(request.user):
@@ -887,21 +696,18 @@ def admin_dashboard(request):
     return render(request, "admin/dashboard.html")
 
 
-# -----------------------
-# USER MANAGEMENT
-# -----------------------
 @login_required
 def admin_users(request):
-    if getattr(request.user, "role", None) != "admin":
+    if not admin_only(request.user):
         messages.error(request, "Access denied.")
         return redirect("home")
 
-    users = CustomUser.objects.all().order_by("role", "username")
+    users = User.objects.all().order_by("role", "username")
 
-    # Attach college name for college users
+    # ✅ FIX: College linked via user FK
     college_map = {
-        c.username: c.college_name
-        for c in College.objects.all()
+        college.user.username: college.college_name
+        for college in College.objects.select_related("user")
     }
 
     for u in users:
@@ -918,51 +724,60 @@ def admin_users(request):
 @login_required
 def admin_add_user(request):
     if not admin_only(request.user):
+        messages.error(request, "Access denied.")
         return redirect("home")
 
     if request.method == "POST":
-        User.objects.create(
-            username=request.POST["username"],
-            password=make_password(request.POST["password"]),
-            role=request.POST["role"],
-            is_active=True,
+        username = request.POST.get("username", "").strip()
+        password = request.POST.get("password", "").strip()
+        role = request.POST.get("role")
+        college_name = request.POST.get("college_name", "").strip()
+        district = request.POST.get("district", "").strip()
+
+        if not username or not password or not role:
+            messages.error(request, "All fields are required.")
+            return redirect("admin_add_user")
+
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "Username already exists.")
+            return redirect("admin_add_user")
+
+        # ✅ CREATE USER
+        user = User.objects.create_user(
+            username=username,
+            password=password,
+            role=role
         )
-        messages.success(request, "User created successfully")
+
+        # ✅ CREATE COLLEGE PROFILE IF ROLE = COLLEGE
+        if role == "college":
+            if not college_name:
+                user.delete()
+                messages.error(request, "College name is required.")
+                return redirect("admin_add_user")
+
+            College.objects.create(
+                user=user,
+                college_name=college_name,
+                district=district,
+            )
+
+        messages.success(request, "User created successfully.")
         return redirect("admin_users")
 
     return render(request, "admin/add_user.html")
 
 
-@login_required
-def admin_edit_user(request, user_id):
-    if not admin_only(request.user):
-        return redirect("home")
 
-    user = get_object_or_404(User, id=user_id)
-
-    if request.method == "POST":
-        user.username = request.POST["username"]
-
-        if request.POST.get("password"):
-            user.password = make_password(request.POST["password"])
-
-        user.role = request.POST["role"]
-        user.save()
-        messages.success(request, "User updated")
-        return redirect("admin_users")
-
-    return render(request, "admin/edit_user.html", {"u": user})
-
-
+#🔁 ADMIN – ACTIVATE / DEACTIVATE USER
 @login_required
 def admin_toggle_user(request, user_id):
-    if getattr(request.user, "role", None) != "admin":
+    if not admin_only(request.user):
         messages.error(request, "Access denied.")
         return redirect("admin_dashboard")
 
-    user = get_object_or_404(CustomUser, id=user_id)
+    user = get_object_or_404(User, id=user_id)
 
-    # Prevent disabling yourself
     if user == request.user:
         messages.warning(request, "You cannot disable your own account.")
         return redirect("admin_users")
@@ -976,10 +791,7 @@ def admin_toggle_user(request, user_id):
     return redirect("admin_users")
 
 
-
-# -----------------------
-# SITE SETTINGS
-# -----------------------
+#⚙️ ADMIN – SITE SETTINGS
 @login_required
 def admin_site_settings(request):
     if not admin_only(request.user):
@@ -990,14 +802,12 @@ def admin_site_settings(request):
     if request.method == "POST":
         setting.allow_student_registration = "allow" in request.POST
         setting.save()
-        messages.success(request, "Settings updated")
+        messages.success(request, "Settings updated successfully.")
 
     return render(request, "admin/settings.html", {"setting": setting})
 
 
-# -----------------------
-# BROCHURES
-# -----------------------
+#📘 ADMIN – BROCHURES
 @login_required
 def admin_brochures(request):
     if not admin_only(request.user):
@@ -1007,6 +817,8 @@ def admin_brochures(request):
     return render(request, "admin/brochures.html", {"brochures": brochures})
 
 
+
+#➕ ADMIN – ADD BROCHURE
 @login_required
 def admin_add_brochure(request):
     if not admin_only(request.user):
@@ -1017,15 +829,67 @@ def admin_add_brochure(request):
             title=request.POST["title"],
             image=request.FILES["image"]
         )
-        messages.success(request, "Brochure uploaded")
+        messages.success(request, "Brochure uploaded successfully.")
         return redirect("admin_brochures")
 
     return render(request, "admin/add_brochure.html")
 
 
-# -----------------------
-# PUBLIC BROCHURES
-# -----------------------
+
+#🌐 PUBLIC – BROCHURES
 def public_brochures(request):
     brochures = Brochure.objects.filter(is_active=True)
-    return render(request, "public/brochures.html", {"brochures": brochures})
+    return render(request, "public/brochures.html", {
+        "brochures": brochures
+    })
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+@login_required
+def admin_edit_user(request, user_id):
+    if not admin_only(request.user):
+        return redirect("home")
+
+    user = get_object_or_404(User, id=user_id)
+
+    if request.method == "POST":
+        user.username = request.POST.get("username", user.username)
+
+        # ✅ CORRECT WAY
+        if request.POST.get("password"):
+            user.set_password(request.POST["password"])
+
+        user.role = request.POST.get("role", user.role)
+        user.save()
+
+        messages.success(request, "User updated successfully.")
+        return redirect("admin_users")
+
+    return render(request, "admin/edit_user.html", {"u": user})
+
+
+#Delete User
+
+@login_required
+def admin_delete_user(request, user_id):
+    if not admin_only(request.user):
+        messages.error(request, "Access denied.")
+        return redirect("admin_dashboard")
+
+    user = get_object_or_404(User, id=user_id)
+
+    # ❌ Prevent self-delete
+    if user == request.user:
+        messages.warning(request, "You cannot delete your own account.")
+        return redirect("admin_users")
+
+    username = user.username
+    user.delete()   # ✅ cascades College automatically
+
+    messages.success(request, f"User '{username}' deleted successfully.")
+    return redirect("admin_users")

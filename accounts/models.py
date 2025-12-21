@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
@@ -28,14 +29,23 @@ class CustomUser(AbstractUser):
 # ---------------------------------------------------------
 # College Table
 # ---------------------------------------------------------
+from django.conf import settings
+
 class College(models.Model):
+    user = models.ForeignKey(   # 🔥 TEMP: NOT OneToOne
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="colleges"
+    )
     college_name = models.CharField(max_length=255)
     district = models.CharField(max_length=255)
-    username = models.CharField(max_length=150, unique=True)
-    password = models.CharField(max_length=255) 
 
     def __str__(self):
         return self.college_name
+
+
 
 
 # ---------------------------------------------------------
