@@ -1,0 +1,168 @@
+{% extends "organizer/base.html" %}
+{% block title %}Result Exports{% endblock %}
+{% block page_title %}Result Exports{% endblock %}
+
+{% block content %}
+<div class="export-dashboard">
+
+    <!-- ================= PAGE HEADER ================= -->
+    <div class="page-header mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="fas fa-trophy text-warning me-2"></i>
+                Result Reports
+            </h2>
+            <p class="text-muted mb-0">
+                Filter and export published results for documentation and verification
+            </p>
+        </div>
+
+        <div class="badge bg-light text-dark border">
+            {{ data|length }} Records
+        </div>
+    </div>
+
+    <!-- ================= FILTERS ================= -->
+    <form method="get" class="card shadow-sm p-4 mb-4">
+
+        <div class="row g-3">
+
+            <!-- Item -->
+            <div class="col-md-4">
+                <label class="form-label">
+                    <i class="fas fa-trophy me-1 text-warning"></i>
+                    Event Item
+                </label>
+                <select name="item" class="form-select">
+                    <option value="">All Items</option>
+                    {% for i in items %}
+                        <option value="{{ i.id }}"
+                                {% if selected.item == i.id|stringformat:"s" %}selected{% endif %}>
+                            {{ i.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- College -->
+            <div class="col-md-4">
+                <label class="form-label">
+                    <i class="fas fa-university me-1 text-primary"></i>
+                    College
+                </label>
+                <select name="college" class="form-select">
+                    <option value="">All Colleges</option>
+                    {% for c in colleges %}
+                        <option value="{{ c.id }}"
+                                {% if selected.college == c.id|stringformat:"s" %}selected{% endif %}>
+                            {{ c.college_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Category -->
+            <div class="col-md-4">
+                <label class="form-label">
+                    <i class="fas fa-tags me-1 text-success"></i>
+                    Category
+                </label>
+                <select name="category" class="form-select">
+                    <option value="">All Categories</option>
+                    {% for c in categories %}
+                        <option value="{{ c }}"
+                                {% if selected.category == c %}selected{% endif %}>
+                            {{ c }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+        </div>
+
+        <div class="mt-3 d-flex gap-2">
+            <button class="btn btn-primary">
+                <i class="fas fa-filter me-1"></i> Apply Filters
+            </button>
+            <a href="{% url 'organizer_result_exports' %}" class="btn btn-outline-secondary">
+                Reset
+            </a>
+        </div>
+    </form>
+
+    <!-- ================= EXPORT BUTTONS ================= -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body d-flex flex-wrap gap-3">
+
+            <a href="{% url 'organizer_export_result_excel' %}?{{ request.GET.urlencode }}"
+               class="btn btn-success">
+                <i class="fas fa-file-excel me-1"></i>
+                Export Results (Excel)
+            </a>
+
+            <a href="{% url 'organizer_export_result_pdf' %}?{{ request.GET.urlencode }}"
+               class="btn btn-danger">
+                <i class="fas fa-file-pdf me-1"></i>
+                Export Results (PDF)
+            </a>
+
+        </div>
+    </div>
+
+    <!-- ================= PREVIEW TABLE ================= -->
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+            <strong>Result Preview</strong>
+        </div>
+
+        {% if data %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+
+                <thead class="table-light">
+                    <tr>
+                        <th>College</th>
+                        <th>Student</th>
+                        <th>Event Item</th>
+                        <th>Position</th>
+                        <th>Grade</th>
+                        <th>Points</th>
+                        <th>Participants</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                {% for r in data %}
+                <tr>
+                    <td>{{ r.college.college_name }}</td>
+                    <td>{{ r.item.name }}</td>
+                    <td>{{ r.category }}</td>
+                    <td>{{ r.position }}</td>
+                    <td>{{ r.grade }}</td>
+                    <td>{{ r.points }}</td>
+                    <td>
+                        <ul class="mb-0">
+                            {% for s in r.students %}
+                                <li>{{ s.name }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+
+
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">
+            <i class="fas fa-search fa-2x mb-2"></i>
+            <p>No results found for the selected filters</p>
+        </div>
+        {% endif %}
+
+    </div>
+
+</div>
+{% endblock %}

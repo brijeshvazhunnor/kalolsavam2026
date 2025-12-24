@@ -4,154 +4,704 @@
 {% block page_title %}Organizer Dashboard{% endblock %}
 
 {% block content %}
-
 <!-- ================= STATS ================= -->
-<div class="row g-4 mb-4">
-
-    {% comment %} STAT CARD {% endcomment %}
-    <div class="col-6 col-md-3">
-        <div class="dashboard-stat">
-            <div class="stat-icon bg-primary">
+<div class="dashboard-stats-grid mb-5">
+    <div class="stat-card">
+        <div class="stat-icon-wrapper">
+            <div class="stat-icon bg-primary-gradient">
                 <i class="fas fa-trophy"></i>
             </div>
-            <div class="stat-info">
-                <div class="stat-value">{{ total_items }}</div>
-                <div class="stat-label">Event Items</div>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value">{{ total_items }}</div>
+            <div class="stat-label">Event Items</div>
+            <div class="stat-trend">
+                <i class="fas fa-chart-line text-success"></i>
+                <span class="text-muted">Total managed</span>
             </div>
         </div>
     </div>
 
-    <div class="col-6 col-md-3">
-        <div class="dashboard-stat">
-            <div class="stat-icon bg-success">
+    <div class="stat-card">
+        <div class="stat-icon-wrapper">
+            <div class="stat-icon bg-success-gradient">
                 <i class="fas fa-users"></i>
             </div>
-            <div class="stat-info">
-                <div class="stat-value">{{ total_teams }}</div>
-                <div class="stat-label">Teams</div>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value">{{ total_teams }}</div>
+            <div class="stat-label">Teams</div>
+            <div class="stat-trend">
+                <i class="fas fa-users text-info"></i>
+                <span class="text-muted">Registered teams</span>
             </div>
         </div>
     </div>
 
-    <div class="col-6 col-md-3">
-        <div class="dashboard-stat">
-            <div class="stat-icon bg-warning">
+    <div class="stat-card">
+        <div class="stat-icon-wrapper">
+            <div class="stat-icon bg-warning-gradient">
                 <i class="fas fa-check-circle"></i>
             </div>
-            <div class="stat-info">
-                <div class="stat-value">{{ total_results }}</div>
-                <div class="stat-label">Results Published</div>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value">{{ total_results }}</div>
+            <div class="stat-label">Results Published</div>
+            <div class="stat-trend">
+                <i class="fas fa-file-export text-primary"></i>
+                <span class="text-muted">Published items</span>
             </div>
         </div>
     </div>
 
-    <div class="col-6 col-md-3">
-        <div class="dashboard-stat">
-            <div class="stat-icon bg-info">
+    <div class="stat-card">
+        <div class="stat-icon-wrapper">
+            <div class="stat-icon bg-info-gradient">
                 <i class="fas fa-university"></i>
             </div>
-            <div class="stat-info">
-                <div class="stat-value">{{ total_colleges }}</div>
-                <div class="stat-label">Colleges</div>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value">{{ total_colleges }}</div>
+            <div class="stat-label">Colleges</div>
+            <div class="stat-trend">
+                <i class="fas fa-map-marker-alt text-danger"></i>
+                <span class="text-muted">Participating</span>
             </div>
         </div>
     </div>
-
 </div>
 
 <!-- ================= QUICK ACTIONS ================= -->
-<div class="card dashboard-card mb-4">
-    <div class="card-header bg-transparent">
-        <h5 class="mb-0">
-            <i class="fas fa-bolt me-2 text-warning"></i> Quick Actions
-        </h5>
+<div class="dashboard-card mb-5">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-bolt text-warning me-2"></i>Quick Actions
+        </h3>
+        <p class="card-subtitle">Frequently used functions</p>
     </div>
-
+    
     <div class="card-body">
-        <div class="row g-3">
-            <div class="col-sm-6 col-md-3">
-                <a href="{% url 'organizer_items' %}" class="action-tile">
-                    <i class="fas fa-trophy"></i>
-                    <span>Manage Items</span>
-                </a>
-            </div>
+        <div class="quick-actions-grid">
+            <a href="{% url 'organizer_items' %}" class="action-card">
+                <div class="action-icon bg-primary-light">
+                    <i class="fas fa-trophy text-primary"></i>
+                </div>
+                <div class="action-content">
+                    <h6>Manage Items</h6>
+                    <p class="text-muted">Add/edit event items</p>
+                </div>
+                <div class="action-arrow">
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </a>
 
-            <div class="col-sm-6 col-md-3">
-                <a href="{% url 'organizer_items' %}" class="action-tile">
-                    <i class="fas fa-plus-circle"></i>
-                    <span>Add Results</span>
-                </a>
-            </div>
+            <a href="{% url 'organizer_items' %}" class="action-card">
+                <div class="action-icon bg-success-light">
+                    <i class="fas fa-plus-circle text-success"></i>
+                </div>
+                <div class="action-content">
+                    <h6>Add Results</h6>
+                    <p class="text-muted">Publish new results</p>
+                </div>
+                <div class="action-arrow">
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </a>
 
-            <div class="col-sm-6 col-md-3">
-                <a href="{% url 'college_ranking_live' %}" class="action-tile">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>College Ranking</span>
-                </a>
-            </div>
+            <a href="{% url 'college_ranking_live' %}" class="action-card">
+                <div class="action-icon bg-warning-light">
+                    <i class="fas fa-chart-bar text-warning"></i>
+                </div>
+                <div class="action-content">
+                    <h6>College Ranking</h6>
+                    <p class="text-muted">View live standings</p>
+                </div>
+                <div class="action-arrow">
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </a>
 
-            <div class="col-sm-6 col-md-3">
-                <a href="{% url 'organizer_student_results' %}" class="action-tile">
-                    <i class="fas fa-search"></i>
-                    <span>Search Results</span>
-                </a>
-            </div>
+            <a href="{% url 'organizer_student_results' %}" class="action-card">
+                <div class="action-icon bg-info-light">
+                    <i class="fas fa-search text-info"></i>
+                </div>
+                <div class="action-content">
+                    <h6>Search Results</h6>
+                    <p class="text-muted">Find student results</p>
+                </div>
+                <div class="action-arrow">
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </a>
+
+            <a href="{% url 'organizer_participation_exports' %}" class="action-card">
+                <div class="action-icon bg-info-light">
+                    <i class="fas fa-file-export text-info"></i>
+                </div>
+                <div class="action-content">
+                    <h6>Participation Exports</h6>
+                    <p class="text-muted">Download student lists (PDF / Excel)</p>
+                </div>
+                <div class="action-arrow">
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </a>
+
+
+            <a href="{% url 'organizer_send_appeal_result' %}" class="action-card">
+                <div class="action-icon bg-purple-light">
+                    <i class="fas fa-inbox text-purple"></i>
+                </div>
+                <div class="action-content">
+                    <h6>Appeals</h6>
+                    <p class="text-muted">Manage appeal requests</p>
+                </div>
+                <div class="action-arrow">
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </a>
+            <a href="{% url 'organizer_result_exports' %}" class="action-card">
+                <div class="action-icon bg-warning-light">
+                    <i class="fas fa-trophy text-warning"></i>
+                </div>
+                <div class="action-content">
+                    <h6>Result Exports</h6>
+                    <p class="text-muted">Download published results</p>
+                </div>
+                <div class="action-arrow">
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </a>
+
         </div>
     </div>
 </div>
 
 <!-- ================= INFO PANELS ================= -->
-<div class="row g-4">
-
-    <!-- Overview -->
-    <div class="col-md-6">
-        <div class="card dashboard-card h-100">
-            <div class="card-header bg-transparent">
-                <h5 class="mb-0">
-                    <i class="fas fa-info-circle me-2 text-primary"></i>
-                    Dashboard Overview
-                </h5>
+<div class="dashboard-panels-grid mb-5">
+    <div class="info-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-info-circle text-primary me-2"></i>
+                Dashboard Overview
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="welcome-section mb-4">
+                <h4 class="welcome-title">Welcome to the <span class="text-primary">Result Committee Dashboard</span></h4>
+                <p class="welcome-text">Manage your event efficiently with these key functions:</p>
             </div>
-            <div class="card-body text-muted">
-                <p>
-                    Welcome to the <strong>Result Committee Dashboard</strong>.
-                </p>
-                <ul class="mb-0">
-                    <li>Manage event items and results</li>
-                    <li>Publish and edit results securely</li>
-                    <li>Monitor college rankings</li>
-                    <li>Search student results efficiently</li>
-                </ul>
+            
+            <div class="features-list">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-check-circle text-success"></i>
+                    </div>
+                    <div class="feature-content">
+                        <h6>Manage Event Items & Results</h6>
+                        <p class="text-muted">Add, edit, and publish event results securely</p>
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line text-warning"></i>
+                    </div>
+                    <div class="feature-content">
+                        <h6>Monitor College Rankings</h6>
+                        <p class="text-muted">Track real-time standings and performance metrics</p>
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-search text-info"></i>
+                    </div>
+                    <div class="feature-content">
+                        <h6>Search Student Results</h6>
+                        <p class="text-muted">Quickly find and verify student performance data</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- System Status -->
-    <div class="col-md-6">
-        <div class="card dashboard-card h-100">
-            <div class="card-header bg-transparent">
-                <h5 class="mb-0">
-                    <i class="fas fa-cogs me-2 text-secondary"></i>
-                    System Status
-                </h5>
+    <div class="info-card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-cogs text-secondary me-2"></i>
+                System Status
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="status-list">
+                <div class="status-item">
+                    <div class="status-indicator status-active"></div>
+                    <div class="status-content">
+                        <h6>Result Module</h6>
+                        <p class="text-muted">All systems operational</p>
+                    </div>
+                    <div class="status-badge">
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                </div>
+                
+                <div class="status-item">
+                    <div class="status-indicator status-running"></div>
+                    <div class="status-content">
+                        <h6>Ranking Engine</h6>
+                        <p class="text-muted">Live updates enabled</p>
+                    </div>
+                    <div class="status-badge">
+                        <span class="badge bg-success">Running</span>
+                    </div>
+                </div>
+                
+                <div class="status-item">
+                    <div class="status-indicator status-ok"></div>
+                    <div class="status-content">
+                        <h6>Data Integrity</h6>
+                        <p class="text-muted">All checks passed</p>
+                    </div>
+                    <div class="status-badge">
+                        <span class="badge bg-success">OK</span>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="status-row">
-                    <span>Result Module</span>
-                    <span class="badge bg-success">Active</span>
+            
+            <div class="system-uptime mt-5">
+                <div class="uptime-header">
+                    <h6>System Uptime</h6>
+                    <span class="text-success">99.8%</span>
                 </div>
-                <div class="status-row">
-                    <span>Ranking Engine</span>
-                    <span class="badge bg-success">Running</span>
+                <div class="progress uptime-progress">
+                    <div class="progress-bar bg-success" style="width: 99.8%"></div>
                 </div>
-                <div class="status-row">
-                    <span>Data Integrity</span>
-                    <span class="badge bg-success">OK</span>
-                </div>
+                <p class="text-muted small mt-2">Last updated: Just now</p>
             </div>
         </div>
     </div>
-
 </div>
 
+<style>
+:root {
+    --primary-color: #4361ee;
+    --success-color: #06d6a0;
+    --warning-color: #ffd166;
+    --danger-color: #ef476f;
+    --info-color: #118ab2;
+    --purple-color: #7209b7;
+    --light-bg: #f8f9fa;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Stats Grid */
+.dashboard-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--card-shadow-hover);
+}
+
+.stat-icon-wrapper {
+    flex-shrink: 0;
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.bg-primary-gradient {
+    background: linear-gradient(135deg, var(--primary-color), #5a7cff);
+}
+
+.bg-success-gradient {
+    background: linear-gradient(135deg, var(--success-color), #2ee7b6);
+}
+
+.bg-warning-gradient {
+    background: linear-gradient(135deg, var(--warning-color), #ffde8a);
+}
+
+.bg-info-gradient {
+    background: linear-gradient(135deg, var(--info-color), #2ab7e6);
+}
+
+.stat-content {
+    flex-grow: 1;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #2d3748;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #718096;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.stat-trend {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+}
+
+/* Quick Actions */
+.dashboard-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 1.5rem 1.5rem 0.5rem;
+    border-bottom: none;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.25rem;
+}
+
+.card-subtitle {
+    font-size: 0.875rem;
+    color: #718096;
+    margin-bottom: 0;
+}
+
+.card-body {
+    padding: 1rem 1.5rem 1.5rem;
+}
+
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.action-card {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 8px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    color: inherit;
+    gap: 1rem;
+}
+
+.action-card:hover {
+    background: var(--light-bg);
+    border-color: var(--primary-color);
+    transform: translateX(4px);
+}
+
+.action-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.bg-primary-light { background-color: rgba(67, 97, 238, 0.1); }
+.bg-success-light { background-color: rgba(6, 214, 160, 0.1); }
+.bg-warning-light { background-color: rgba(255, 209, 102, 0.1); }
+.bg-info-light { background-color: rgba(17, 139, 178, 0.1); }
+.bg-purple-light { background-color: rgba(114, 9, 183, 0.1); }
+
+.action-content {
+    flex-grow: 1;
+}
+
+.action-content h6 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: #2d3748;
+}
+
+.action-content p {
+    font-size: 0.75rem;
+    margin-bottom: 0;
+}
+
+.action-arrow {
+    color: #cbd5e0;
+    font-size: 0.875rem;
+}
+
+.action-card:hover .action-arrow {
+    color: var(--primary-color);
+}
+
+/* Info Panels Grid */
+.dashboard-panels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.info-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.welcome-section {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.welcome-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: #2d3748;
+}
+
+.welcome-text {
+    color: #718096;
+    margin-bottom: 0;
+}
+
+.features-list {
+    margin-top: 1.5rem;
+}
+
+.feature-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.feature-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    background: var(--light-bg);
+    flex-shrink: 0;
+}
+
+.feature-content h6 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: #2d3748;
+}
+
+.feature-content p {
+    font-size: 0.8125rem;
+    margin-bottom: 0;
+    color: #718096;
+}
+
+/* Status List */
+.status-list {
+    margin-top: 0.5rem;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.status-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.status-active { background-color: var(--success-color); }
+.status-running { background-color: var(--info-color); }
+.status-ok { background-color: var(--primary-color); }
+
+.status-content {
+    flex-grow: 1;
+}
+
+.status-content h6 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: #2d3748;
+}
+
+.status-content p {
+    font-size: 0.8125rem;
+    margin-bottom: 0;
+    color: #718096;
+}
+
+.status-badge .badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+}
+
+/* System Uptime */
+.system-uptime {
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.uptime-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.uptime-header h6 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0;
+    color: #2d3748;
+}
+
+.uptime-header span {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.uptime-progress {
+    height: 6px;
+    border-radius: 3px;
+    background-color: #e2e8f0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .dashboard-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .quick-actions-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+    
+    .dashboard-panels-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .dashboard-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-card {
+        padding: 0.75rem;
+    }
+}
+</style>
+
+<script>
+// Minimal JavaScript for interactivity without heavy dependencies
+document.addEventListener('DOMContentLoaded', function() {
+    // Add hover effects for action cards
+    const actionCards = document.querySelectorAll('.action-card');
+    
+    actionCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.boxShadow = 'none';
+        });
+    });
+    
+    // Add subtle animation to stat cards on load
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
 {% endblock %}

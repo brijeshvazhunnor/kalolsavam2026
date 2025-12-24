@@ -209,26 +209,47 @@
                 </div>
                 
                 <nav class="nav flex-column mt-4">
-                    <a class="nav-link {% if request.path == '/organizer/' %}active{% endif %}" 
-                       href="{% url 'organizer_dashboard' %}">
+
+                    <a class="nav-link {% if request.resolver_match.url_name == 'organizer_dashboard' %}active{% endif %}"
+                    href="{% url 'organizer_dashboard' %}">
                         <i class="fas fa-home"></i> Dashboard
                     </a>
-                    <a class="nav-link {% if 'items' in request.path %}active{% endif %}" 
-                       href="{% url 'organizer_items' %}">
+
+                    <a class="nav-link {% if request.resolver_match.url_name == 'organizer_items' %}active{% endif %}"
+                    href="{% url 'organizer_items' %}">
                         <i class="fas fa-trophy"></i> Event Items
                     </a>
-                    <a class="nav-link {% if 'ranking' in request.path %}active{% endif %}" 
-                       href="{% url 'college_ranking_live' %}">
+
+                    <a class="nav-link {% if request.resolver_match.url_name == 'college_ranking_live' %}active{% endif %}"
+                    href="{% url 'college_ranking_live' %}">
                         <i class="fas fa-chart-bar"></i> College Ranking
                     </a>
-                    <a class="nav-link {% if 'student-results' in request.path %}active{% endif %}" 
-                       href="{% url 'organizer_student_results' %}">
+
+                    <a class="nav-link {% if request.resolver_match.url_name == 'organizer_student_results' %}active{% endif %}"
+                    href="{% url 'organizer_student_results' %}">
                         <i class="fas fa-search"></i> Search Results
                     </a>
+
+                    <a class="nav-link {% if request.resolver_match.url_name == 'organizer_send_appeal_result' or request.resolver_match.url_name == 'organizer_appeal' or request.resolver_match.url_name == 'organizer_appeal_inbox' %}active{% endif %}"
+                    href="{% url 'organizer_send_appeal_result' %}">
+                        <i class="fas fa-inbox"></i> Appeal
+                    </a>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'organizer_participation_exports' or request.resolver_match.url_name == 'organizer_export_excel' or request.resolver_match.url_name == 'organizer_export_pdf' %}active{% endif %}"
+                    href="{% url 'organizer_participation_exports' %}">
+                        <i class="fas fa-file-export"></i> Participation Exports
+                    </a>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'organizer_result_exports' %}active{% endif %}"
+                    href="{% url 'organizer_result_exports' %}">
+                        <i class="fas fa-file-export"></i> Result Exports
+                    </a>
+
+
                     <a class="nav-link" href="{% url 'logout' %}" style="color: var(--accent-color);">
                         <i class="fas fa-sign-out-alt"></i> Logout
                     </a>
+
                 </nav>
+
             </div>
             
             <!-- Main Content -->

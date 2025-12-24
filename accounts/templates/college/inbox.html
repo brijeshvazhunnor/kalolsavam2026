@@ -1,0 +1,431 @@
+{% extends "base.html" %}
+{% block title %}Inbox - Appeals{% endblock %}
+
+{% block page_title_content %}
+    Appeal Status
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-lg-8 col-md-10 mx-auto">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h3 fw-bold text-primary mb-1">📥 Inbox</h1>
+          <p class="text-muted mb-0">Your appeal requests and review decisions</p>
+        </div>
+        
+        <div class="d-flex align-items-center">
+          <span class="badge bg-light text-dark border me-2" id="unread-counter">0 unread</span>
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown">
+              <i class="fas fa-filter"></i> Filter
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="history.back()">
+                <i class="fas fa-arrow-left me-1"></i> Back
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item filter-option active" href="#" data-filter="all">All Messages</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item filter-option" href="#" data-filter="accepted">Accepted</a></li>
+              <li><a class="dropdown-item filter-option" href="#" data-filter="rejected">Rejected</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8 col-md-10 mx-auto">
+      <!-- Search Bar -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3">
+          <div class="input-group">
+            <span class="input-group-text bg-transparent border-0">
+              <i class="fas fa-search text-muted"></i>
+            </span>
+            <input type="text" class="form-control border-0" id="searchInput" placeholder="Search appeals by item name, message, or status...">
+            <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Messages List -->
+      {% if messages %}
+        <div id="messages-container">
+          {% for m in messages %}
+            <div class="appeal-card card mb-4 shadow-sm border-hover" 
+                 data-status="{{ m.status }}"
+                 data-item="{{ m.item.name|lower }}"
+                 data-message="{{ m.message|lower|default:'' }}">
+              <div class="card-body p-4">
+                <div class="row align-items-center">
+                  <div class="col-md-8">
+                    <div class="d-flex align-items-start">
+                      <div class="appeal-icon me-3">
+                        {% if m.status == "accepted" %}
+                          <div class="icon-container bg-success bg-opacity-10 text-success">
+                            <i class="fas fa-check-circle"></i>
+                          </div>
+                        {% elif m.status == "rejected" %}
+                          <div class="icon-container bg-danger bg-opacity-10 text-danger">
+                            <i class="fas fa-times-circle"></i>
+                          </div>
+                        {% else %}
+                          <div class="icon-container bg-warning bg-opacity-10 text-warning">
+                            <i class="fas fa-clock"></i>
+                          </div>
+                        {% endif %}
+                      </div>
+                      <div>
+                        <h5 class="card-title mb-1">{{ m.item.name }}</h5>
+                        <div class="d-flex flex-wrap align-items-center mb-2">
+                          <span class="badge status-badge bg-{% if m.status == 'accepted' %}success{% elif m.status == 'rejected' %}danger{% else %}warning{% endif %} me-2">
+                            {{ m.status|capfirst }}
+                          </span>
+                          <small class="text-muted me-3">
+                            <i class="far fa-calendar me-1"></i>{{ m.created_at|date:"d M Y, h:i A" }}
+                          </small>
+                          {% if m.status == "accepted" %}
+                            <small class="text-success me-3">
+                              <i class="fas fa-user-tag me-1"></i>{{ m.get_position_display }}
+                            </small>
+                            <small class="text-primary">
+                              <i class="fas fa-star me-1"></i>Grade: {{ m.grade }}
+                            </small>
+                          {% endif %}
+                        </div>
+                        
+                        {% if m.message %}
+                          <p class="card-text message-preview text-muted mb-0">{{ m.message|truncatechars:150 }}</p>
+                        {% else %}
+                          <p class="card-text text-muted fst-italic mb-0">No message provided</p>
+                        {% endif %}
+                        
+                        {% if m.result_image %}
+                          <div class="mt-2">
+                            <a href="{{ m.result_image.url }}" class="btn btn-sm btn-outline-primary" target="_blank" data-bs-toggle="tooltip" title="View full image">
+                              <i class="fas fa-image me-1"></i>View Result Image
+                            </a>
+                          </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4 text-end mt-3 mt-md-0">
+                    <button class="btn btn-sm btn-outline-primary view-details" data-id="{{ forloop.counter }}">
+                      <i class="fas fa-expand-alt me-1"></i>View Details
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Hidden details section -->
+              <div class="card-footer bg-light border-0 pt-0 d-none" id="details-{{ forloop.counter }}">
+                <hr class="mb-3">
+                <div class="row">
+                  <div class="col-lg-8">
+                    <h6 class="fw-bold">Full Message</h6>
+                    <p class="mb-3">{% if m.message %}{{ m.message }}{% else %}<span class="fst-italic text-muted">No message provided</span>{% endif %}</p>
+                    
+                    {% if m.status == "accepted" %}
+                      <div class="row">
+                        <div class="col-md-6">
+                          <h6 class="fw-bold">Position</h6>
+                          <p class="text-success">{{ m.get_position_display }}</p>
+                        </div>
+                        <div class="col-md-6">
+                          <h6 class="fw-bold">Grade</h6>
+                          <p class="text-primary">{{ m.grade }}</p>
+                        </div>
+                      </div>
+                    {% endif %}
+                  </div>
+                  <div class="col-lg-4">
+                    {% if m.result_image %}
+                      <h6 class="fw-bold">Result Image</h6>
+                      <a href="{{ m.result_image.url }}" target="_blank">
+                        <img src="{{ m.result_image.url }}" 
+                             class="img-thumbnail img-fluid rounded mt-1" 
+                             alt="Result image for {{ m.item.name }}"
+                             style="max-height: 150px;">
+                      </a>
+                      <p class="small text-muted mt-2">Click image to view full size</p>
+                    {% else %}
+                      <h6 class="fw-bold">Result Image</h6>
+                      <p class="text-muted fst-italic">No image provided</p>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="mt-3 text-end">
+                  <button class="btn btn-sm btn-outline-secondary close-details" data-id="{{ forloop.counter }}">
+                    <i class="fas fa-times me-1"></i>Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        
+        <!-- Empty state for no search results -->
+        <div id="no-results" class="text-center py-5 d-none">
+          <div class="mb-4">
+            <i class="fas fa-search fa-3x text-muted opacity-50"></i>
+          </div>
+          <h4 class="text-muted">No matching appeals found</h4>
+          <p class="text-muted">Try adjusting your search or filter to find what you're looking for.</p>
+        </div>
+      {% else %}
+        <!-- Empty inbox state -->
+        <div class="text-center py-5">
+          <div class="mb-4">
+            <i class="fas fa-inbox fa-4x text-muted opacity-50"></i>
+          </div>
+          <h4 class="text-muted mb-3">Your appeal inbox is empty</h4>
+          <p class="text-muted mb-4">When appeals are submitted, they will appear here for your review.</p>
+          <a href="#" class="btn btn-primary">
+            <i class="fas fa-sync-alt me-2"></i>Refresh Page
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Quick stats modal (optional enhancement) -->
+<div class="modal fade" id="statsModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Appeal Statistics</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row text-center">
+          <div class="col-4">
+            <div class="p-3">
+              <h3 class="text-primary" id="total-count">0</h3>
+              <p class="text-muted mb-0">Total</p>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="p-3">
+              <h3 class="text-success" id="accepted-count">0</h3>
+              <p class="text-muted mb-0">Accepted</p>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="p-3">
+              <h3 class="text-danger" id="rejected-count">0</h3>
+              <p class="text-muted mb-0">Rejected</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  :root {
+    --primary-color: #4361ee;
+    --success-color: #06d6a0;
+    --warning-color: #ffd166;
+    --danger-color: #ef476f;
+    --light-bg: #f8f9fa;
+  }
+  
+  .appeal-card {
+    border-left: 4px solid transparent;
+    transition: all 0.3s ease;
+    border-radius: 10px;
+  }
+  
+  .appeal-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08) !important;
+  }
+  
+  .appeal-card[data-status="accepted"] {
+    border-left-color: var(--success-color);
+  }
+  
+  .appeal-card[data-status="rejected"] {
+    border-left-color: var(--danger-color);
+  }
+  
+  .appeal-card[data-status="pending"] {
+    border-left-color: var(--warning-color);
+  }
+  
+  .icon-container {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+  
+  .status-badge {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+  }
+  
+  .message-preview {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .card-footer {
+    border-bottom-left-radius: 10px !important;
+    border-bottom-right-radius: 10px !important;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .appeal-card .card-body {
+      padding: 1.25rem !important;
+    }
+    
+    .icon-container {
+      width: 40px;
+      height: 40px;
+      font-size: 1.25rem;
+    }
+    
+    h5.card-title {
+      font-size: 1.1rem;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .d-flex.justify-content-between.align-items-center {
+      flex-direction: column;
+      align-items: flex-start !important;
+    }
+    
+    .d-flex.align-items-center {
+      margin-top: 1rem;
+      width: 100%;
+      justify-content: space-between;
+    }
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  const cards = Array.from(document.querySelectorAll('.appeal-card'));
+  const searchInput = document.getElementById('searchInput');
+  const clearBtn = document.getElementById('clearSearch');
+  const noResults = document.getElementById('no-results');
+  const unreadCounter = document.getElementById('unread-counter');
+  const filters = document.querySelectorAll('.filter-option');
+
+  let activeFilter = 'all';
+
+  /* ---------------------------
+     Counter (lightweight)
+  ----------------------------*/
+  function updatePendingCount() {
+    const pending = cards.filter(c => c.dataset.status === 'pending').length;
+    unreadCounter.textContent = `${pending} pending`;
+  }
+
+  /* ---------------------------
+     Core Filter + Search
+  ----------------------------*/
+  function applyFilters() {
+    const term = searchInput.value.toLowerCase();
+    let visible = 0;
+
+    cards.forEach(card => {
+      const status = card.dataset.status;
+      const item = card.dataset.item || '';
+      const msg = card.dataset.message || '';
+
+      const statusMatch = activeFilter === 'all' || status === activeFilter;
+      const searchMatch =
+        !term || item.includes(term) || msg.includes(term) || status.includes(term);
+
+      if (statusMatch && searchMatch) {
+        card.style.display = '';
+        visible++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    noResults.classList.toggle('d-none', visible !== 0);
+  }
+
+  /* ---------------------------
+     Filter Clicks
+  ----------------------------*/
+  filters.forEach(f => {
+    f.addEventListener('click', e => {
+      e.preventDefault();
+      filters.forEach(x => x.classList.remove('active'));
+      f.classList.add('active');
+      activeFilter = f.dataset.filter;
+      applyFilters();
+    });
+  });
+
+  /* ---------------------------
+     Search
+  ----------------------------*/
+  searchInput.addEventListener('input', () => {
+    clearBtn.style.display = searchInput.value ? 'block' : 'none';
+    applyFilters();
+  });
+
+  clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    clearBtn.style.display = 'none';
+    applyFilters();
+    searchInput.focus();
+  });
+
+  /* ---------------------------
+     Details Toggle (single logic)
+  ----------------------------*/
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.view-details, .close-details');
+    if (!btn) return;
+
+    const id = btn.dataset.id;
+    const details = document.getElementById(`details-${id}`);
+    const viewBtn = document.querySelector(`.view-details[data-id="${id}"]`);
+
+    const isOpen = !details.classList.contains('d-none');
+
+    document.querySelectorAll('.card-footer').forEach(d => d.classList.add('d-none'));
+
+    if (!isOpen) {
+      details.classList.remove('d-none');
+      viewBtn.innerHTML = '<i class="fas fa-compress-alt me-1"></i>Hide Details';
+    } else {
+      details.classList.add('d-none');
+      viewBtn.innerHTML = '<i class="fas fa-expand-alt me-1"></i>View Details';
+    }
+  });
+
+  /* Init */
+  updatePendingCount();
+  clearBtn.style.display = 'none';
+});
+</script>
+
+{% endblock %}

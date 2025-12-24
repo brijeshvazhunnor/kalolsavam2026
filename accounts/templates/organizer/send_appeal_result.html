@@ -1,0 +1,118 @@
+{% extends "organizer/base.html" %}
+
+{% block title %}Send Appeal Result{% endblock %}
+{% block page_title %}Send Appeal Result{% endblock %}
+
+{% block content %}
+
+<!-- ================= PAGE HEADER ================= -->
+<div class="dashboard-card mb-4">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-paper-plane text-primary me-2"></i>
+            Send Appeal Result
+        </h3>
+        <p class="card-subtitle">
+            Notify colleges about appeal decisions and result updates
+        </p>
+    </div>
+</div>
+
+<!-- ================= FORM CARD ================= -->
+<div class="dashboard-card">
+    <div class="card-body">
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- College + Item -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">College</label>
+                    <select name="college" class="form-select" required>
+                        <option value="" disabled selected>Select College</option>
+                        {% for c in colleges %}
+                            <option value="{{ c.id }}">{{ c.college_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Event Item</label>
+                    <select name="item" class="form-select" required>
+                        <option value="" disabled selected>Select Item</option>
+                        {% for i in items %}
+                            <option value="{{ i.id }}">{{ i.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Result Status</label>
+                <select name="status" class="form-select" required>
+                    <option value="accepted">Accepted</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+            </div>
+
+            <!-- Position + Grade -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Position (optional)</label>
+                    <select name="position" class="form-select">
+                        <option value="">—</option>
+                        <option value="1">1st</option>
+                        <option value="2">2nd</option>
+                        <option value="3">3rd</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Grade (optional)</label>
+                    <select name="grade" class="form-select">
+                        <option value="">—</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Result Image -->
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Result Image (optional)</label>
+                <input type="file" name="result_image" class="form-control">
+                <small class="text-muted">
+                    Upload score sheet or official result image (JPG/PNG)
+                </small>
+            </div>
+
+            <!-- Message -->
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Message to College</label>
+                <textarea name="message"
+                          class="form-control"
+                          rows="4"
+                          placeholder="Add remarks or clarification (optional)"></textarea>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{% url 'organizer_dashboard' %}"
+                   class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Cancel
+                </a>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane me-1"></i> Send Result
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

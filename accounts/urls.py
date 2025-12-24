@@ -54,4 +54,44 @@ urlpatterns = [
     path("admin-panel/brochures/add/", views.admin_add_brochure, name="admin_add_brochure"),
     path("admin-panel/users/toggle/<int:user_id>/",views.admin_toggle_user,name="admin_toggle_user"),
     path("admin-panel/users/<int:user_id>/delete/",views.admin_delete_user,name="admin_delete_user"),
+    #appeallll
+    path("organizer/appeal-result/",views.organizer_send_appeal_result,name="organizer_send_appeal_result"),
+    path("college/inbox/", views.college_inbox, name="college_inbox"),
+
+    #PDFExporting
+    path(
+        "organizer/exports/participation/",
+        views.participation_export_dashboard,
+        name="organizer_participation_exports",
+    ),
+
+    path(
+        "organizer/exports/participation/excel/",
+        views.export_excel,
+        name="organizer_participation_export_excel",
+    ),
+
+    path(
+        "organizer/exports/participation/pdf/",
+        views.export_pdf,
+        name="organizer_participation_export_pdf",
+    ),
+
+    path(
+        "organizer/exports/results/",
+        views.result_export_dashboard,
+        name="organizer_result_exports",
+    ),
+
+    path(
+        "organizer/exports/results/excel/",
+        views.export_result_excel,
+        name="organizer_export_result_excel",
+    ),
+
+    path(
+        "organizer/exports/results/pdf/",
+        views.export_result_pdf,
+        name="organizer_export_result_pdf",
+    ),
 ]

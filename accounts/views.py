@@ -12,7 +12,7 @@ from .forms import (
     ItemForm, RegistrationForm
 )
 from .models import (
-    Student, Item, Registration,
+    AppealNotification, Student, Item, Registration,
     College, Team, Result,
     CustomUser, SiteSetting, Brochure
 )
@@ -893,3 +893,640 @@ def admin_delete_user(request, user_id):
 
     messages.success(request, f"User '{username}' deleted successfully.")
     return redirect("admin_users")
+
+
+# accounts/views.py
+
+@login_required
+def organizer_send_appeal_result(request):
+    if request.user.role != "organizer":
+        return redirect("home")
+
+
+    if request.method == "POST":
+        college = College.objects.get(id=request.POST["college"])
+        item = Item.objects.get(id=request.POST["item"])
+
+        status = request.POST["status"]
+        position = request.POST.get("position") or None
+        grade = request.POST.get("grade") or None
+        message = request.POST.get("message", "")
+        image = request.FILES.get("result_image")
+
+        AppealNotification.objects.create(
+            college=college,
+            item=item,
+            status=status,
+            position=position if status == "accepted" else None,
+            grade=grade if status == "accepted" else None,
+            message=message,
+            result_image=image,
+            sent_by=request.user,
+        )
+
+        messages.success(request, "Appeal result sent to college.")
+        return redirect("organizer_dashboard")
+
+    return render(request, "organizer/send_appeal_result.html", {
+        "items": Item.objects.all(),
+        "colleges": College.objects.all(),
+    })
+
+@login_required
+def college_inbox(request):
+    if request.user.role != "college":
+        return redirect("home")
+
+
+    college = College.objects.get(user=request.user)
+
+    messages_qs = AppealNotification.objects.filter(
+        college=college
+    ).order_by("-created_at")
+
+    return render(request, "college/inbox.html", {
+        "messages": messages_qs
+    })
+
+
+
+#   EXPORTT
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
+
+from openpyxl import Workbook
+
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4   # ✅ REQUIRED
+
+from accounts.models import (
+    Item,
+    College,
+    Registration,
+    Team,
+)
+
+
+
+# =====================================================
+# Unified participation generator (CORE FIX)
+# =====================================================
+def get_teamwise_participation_rows(filters):
+    """
+    Returns TEAM-WISE rows:
+    {
+        college,
+        item,
+        category,
+        type,
+        students (list)
+    }
+    """
+    rows = []
+
+    # =========================
+    # SINGLE EVENTS (Registration)
+    # =========================
+    reg_qs = Registration.objects.select_related(
+        "student",
+        "student__college",
+        "item"
+    )
+
+    if filters.get("item"):
+        reg_qs = reg_qs.filter(item_id=filters["item"])
+    if filters.get("college"):
+        reg_qs = reg_qs.filter(student__college_id=filters["college"])
+    if filters.get("category"):
+        reg_qs = reg_qs.filter(item__category=filters["category"])
+
+    for r in reg_qs:
+        rows.append({
+            "college": r.student.college,
+            "item": r.item,
+            "category": r.item.category,
+            "type": "Single",
+            "students": [r.student],
+        })
+
+    # =========================
+    # GROUP EVENTS (Team.students)
+    # =========================
+    team_qs = Team.objects.select_related(
+        "college",
+        "item"
+    ).prefetch_related("students")
+
+    if filters.get("item"):
+        team_qs = team_qs.filter(item_id=filters["item"])
+    if filters.get("college"):
+        team_qs = team_qs.filter(college_id=filters["college"])
+    if filters.get("category"):
+        team_qs = team_qs.filter(item__category=filters["category"])
+
+    for team in team_qs:
+        rows.append({
+            "college": team.college,
+            "item": team.item,
+            "category": team.item.category,
+            "type": "Group",
+            "students": list(team.students.all()),
+        })
+
+    return rows
+
+
+
+# =====================================================
+# DASHBOARD
+# =====================================================
+@login_required
+def participation_export_dashboard(request):
+    items = Item.objects.all().order_by("name")
+    colleges = College.objects.all().order_by("college_name")
+    categories = Item.objects.values_list(
+        "category",
+        flat=True
+    ).distinct().order_by("category")
+
+    data = get_teamwise_participation_rows(request.GET)
+
+    context = {
+        "items": items,
+        "colleges": colleges,
+        "categories": categories,
+        "data": data[:200],  # preview limit
+        "selected": request.GET,
+        "total_count": len(data),
+    }
+
+    return render(
+        request,
+        "organizer/participation_exports.html",
+        context
+    )
+
+# =====================================================
+# EXCEL EXPORT
+# =====================================================
+@login_required
+def export_excel(request):
+    data = get_teamwise_participation_rows(request.GET)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Participation (Team-wise)"
+
+    ws.append([
+        "College",
+        "Item",
+        "Category",
+        "Type",
+        "Participants",
+    ])
+
+    for row in data:
+        students = ", ".join(
+            [s.name for s in row["students"]]
+        )
+
+        ws.append([
+            row["college"].college_name,
+            row["item"].name,
+            row["category"],
+            row["type"],
+            students,
+        ])
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = (
+        "attachment; filename=participation_teamwise.xlsx"
+    )
+
+    wb.save(response)
+    return response
+
+
+
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import (
+    SimpleDocTemplate, Table, TableStyle,
+    Paragraph, KeepInFrame
+)
+from reportlab.lib import colors
+
+
+@login_required
+def export_pdf(request):
+    data = get_teamwise_participation_rows(request.GET)
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = (
+        "attachment; filename=participation_teamwise.pdf"
+    )
+
+    doc = SimpleDocTemplate(
+        response,
+        pagesize=A4,
+        rightMargin=30,
+        leftMargin=30,
+        topMargin=30,
+        bottomMargin=30,
+    )
+
+    styles = getSampleStyleSheet()
+    cell_style = ParagraphStyle(
+        "cell",
+        parent=styles["Normal"],
+        fontSize=8,
+        leading=10,
+        spaceAfter=4,
+    )
+
+    header_style = ParagraphStyle(
+        "header",
+        parent=styles["Normal"],
+        fontSize=9,
+        leading=11,
+        fontName="Helvetica-Bold",
+    )
+
+    def P(text):
+        return Paragraph(str(text), cell_style)
+
+    # -------------------------
+    # TABLE HEADER
+    # -------------------------
+    table_data = [[
+        Paragraph("College", header_style),
+        Paragraph("Item", header_style),
+        Paragraph("Category", header_style),
+        Paragraph("Type", header_style),
+        Paragraph("Participants", header_style),
+    ]]
+
+    # -------------------------
+    # TABLE ROWS
+    # -------------------------
+    for row in data:
+        participants = "<br/>".join(
+            [s.name for s in row["students"]]
+        ) or "-"
+
+        table_data.append([
+            P(row["college"].college_name),
+            P(row["item"].name),
+            P(row["category"]),
+            P(row["type"]),
+            KeepInFrame(
+                180,  # width
+                200,  # height
+                [P(participants)],
+                mode="shrink",
+            ),
+        ])
+
+    table = Table(
+        table_data,
+        colWidths=[110, 100, 80, 60, 180],
+        repeatRows=1,
+        hAlign="LEFT",
+    )
+
+    table.setStyle(TableStyle([
+        ("GRID", (0,0), (-1,-1), 0.5, colors.black),
+        ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
+        ("VALIGN", (0,0), (-1,-1), "TOP"),
+        ("LEFTPADDING", (0,0), (-1,-1), 6),
+        ("RIGHTPADDING", (0,0), (-1,-1), 6),
+        ("TOPPADDING", (0,0), (-1,-1), 6),
+        ("BOTTOMPADDING", (0,0), (-1,-1), 6),
+    ]))
+
+    doc.build([table])
+    return response
+
+
+# =====================================================
+# PDF RESULT EXPORT
+# =====================================================
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+
+from accounts.models import Result, Item, College
+
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+
+from accounts.models import Result, Item, College
+
+
+@login_required
+def result_export_dashboard(request):
+    # =======================
+    # Dropdown filter data
+    # =======================
+    items = Item.objects.all().order_by("name")
+    colleges = College.objects.all().order_by("college_name")
+    categories = (
+        Item.objects.values_list("category", flat=True)
+        .distinct()
+        .order_by("category")
+    )
+
+    # =======================
+    # Base queryset (TEAM-wise)
+    # =======================
+    qs = (
+        Result.objects
+        .select_related(
+            "item",
+            "team",
+            "team__college",
+        )
+        .prefetch_related(
+            "team__students"
+        )
+        .filter(is_deleted=False)
+    )
+
+    # =======================
+    # Apply filters
+    # =======================
+    item_id = request.GET.get("item")
+    college_id = request.GET.get("college")
+    category = request.GET.get("category")
+
+    if item_id:
+        qs = qs.filter(item_id=item_id)
+
+    if college_id:
+        qs = qs.filter(team__college_id=college_id)
+
+    if category:
+        qs = qs.filter(item__category=category)
+
+    # =======================
+    # Build TEAM-WISE rows
+    # =======================
+    rows = []
+    for result in qs:
+        rows.append({
+            "college": result.team.college,
+            "item": result.item,
+            "category": result.item.category,
+            "position": result.get_position_display(),
+            "grade": result.grade,
+            "points": result.points,
+            "students": result.team.students.all(),  # 👈 key change
+        })
+
+    # =======================
+    # Context
+    # =======================
+    context = {
+        "items": items,
+        "colleges": colleges,
+        "categories": categories,
+        "data": rows[:200],      # preview limit
+        "selected": request.GET,
+        "total_count": len(rows),
+    }
+
+    return render(
+        request,
+        "organizer/result_exports.html",
+        context,
+    )
+
+
+
+from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font
+from openpyxl.utils import get_column_letter
+
+from accounts.models import Result
+
+
+@login_required
+def export_result_excel(request):
+    # =======================
+    # Base queryset (TEAM-wise)
+    # =======================
+    qs = (
+        Result.objects
+        .select_related("item", "team", "team__college")
+        .prefetch_related("team__students")
+        .filter(is_deleted=False)
+    )
+
+    # Filters
+    if request.GET.get("item"):
+        qs = qs.filter(item_id=request.GET["item"])
+    if request.GET.get("college"):
+        qs = qs.filter(team__college_id=request.GET["college"])
+    if request.GET.get("category"):
+        qs = qs.filter(item__category=request.GET["category"])
+
+    # =======================
+    # Workbook & Sheet
+    # =======================
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Kalolsavam Results"
+
+    # =======================
+    # Header Row
+    # =======================
+    headers = [
+        "College",
+        "Item",
+        "Students",
+        "Position",
+        "Grade",
+        "Points",
+    ]
+    ws.append(headers)
+
+    header_font = Font(bold=True)
+    center_align = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    wrap_align = Alignment(vertical="top", wrap_text=True)
+
+    for col_idx, header in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col_idx)
+        cell.font = header_font
+        cell.alignment = center_align
+
+    # =======================
+    # Data Rows (TEAM-wise)
+    # =======================
+    for r in qs:
+        students_text = ", ".join(
+            s.name for s in r.team.students.all()
+        ) or "—"
+
+        ws.append([
+            r.team.college.college_name,
+            r.item.name,
+            students_text,                  # 👈 wrapped cell
+            r.get_position_display(),
+            r.grade,
+            r.points,
+        ])
+
+        current_row = ws.max_row
+        ws.cell(row=current_row, column=1).alignment = wrap_align
+        ws.cell(row=current_row, column=2).alignment = wrap_align
+        ws.cell(row=current_row, column=3).alignment = wrap_align
+        ws.cell(row=current_row, column=4).alignment = center_align
+        ws.cell(row=current_row, column=5).alignment = center_align
+        ws.cell(row=current_row, column=6).alignment = center_align
+
+    # =======================
+    # Column Widths (IMPORTANT)
+    # =======================
+    column_widths = {
+        1: 35,  # College
+        2: 28,  # Item
+        3: 50,  # Students
+        4: 12,  # Position
+        5: 10,  # Grade
+        6: 10,  # Points
+    }
+
+    for col_idx, width in column_widths.items():
+        ws.column_dimensions[get_column_letter(col_idx)].width = width
+
+    # =======================
+    # Response
+    # =======================
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = "attachment; filename=kalolsavam_results.xlsx"
+    wb.save(response)
+
+    return response
+
+
+
+from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import getSampleStyleSheet
+
+from accounts.models import Result
+
+
+@login_required
+def export_result_pdf(request):
+    # =======================
+    # Query (TEAM-wise)
+    # =======================
+    qs = (
+        Result.objects
+        .select_related("item", "team", "team__college")
+        .prefetch_related("team__students")
+        .filter(is_deleted=False)
+    )
+
+    # Filters
+    if request.GET.get("item"):
+        qs = qs.filter(item_id=request.GET["item"])
+    if request.GET.get("college"):
+        qs = qs.filter(team__college_id=request.GET["college"])
+    if request.GET.get("category"):
+        qs = qs.filter(item__category=request.GET["category"])
+
+    # =======================
+    # Response + Document
+    # =======================
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = "attachment; filename=kalolsavam_results.pdf"
+
+    doc = SimpleDocTemplate(
+        response,
+        pagesize=landscape(A4),   # ✅ VERY IMPORTANT
+        rightMargin=24,
+        leftMargin=24,
+        topMargin=24,
+        bottomMargin=24,
+    )
+
+    styles = getSampleStyleSheet()
+    normal = styles["Normal"]
+
+    elements = []
+
+    # =======================
+    # Table Header
+    # =======================
+    table_data = [[
+        "College",
+        "Item",
+        "Students",
+        "Position",
+        "Grade",
+        "Points",
+    ]]
+
+    # =======================
+    # Table Rows (WRAPPED)
+    # =======================
+    for r in qs:
+        students_text = ", ".join(
+            s.name for s in r.team.students.all()
+        ) or "—"
+
+        table_data.append([
+            Paragraph(r.team.college.college_name, normal),
+            Paragraph(r.item.name, normal),
+            Paragraph(students_text, normal),  # ✅ wraps automatically
+            r.get_position_display(),
+            r.grade,
+            str(r.points),
+        ])
+
+    # =======================
+    # Column Widths (in points)
+    # =======================
+    table = Table(
+        table_data,
+        repeatRows=1,
+        colWidths=[180, 140, 260, 80, 60, 60],  # ✅ tuned widths
+    )
+
+    table.setStyle(TableStyle([
+        ("GRID", (0, 0), (-1, -1), 0.75, colors.black),
+
+        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+        ("FONT", (0, 0), (-1, 0), "Helvetica-Bold"),
+
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),   # ✅ critical
+        ("ALIGN", (3, 1), (-1, -1), "CENTER"),
+
+        ("FONTSIZE", (0, 0), (-1, -1), 9),
+
+        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]))
+
+    elements.append(table)
+    doc.build(elements)
+
+    return response

@@ -415,7 +415,7 @@
 {% endblock %}
 
 {% block page_title_content %}
-    College Dashboard
+    Student Registration
 {% endblock %}
 
 {% block content %}
@@ -426,37 +426,69 @@
         <!-- Sidebar -->
         <div class="col-lg-3 col-md-4 mb-4">
             <div class="sidebar-card h-100">
+
+                <!-- HEADER -->
                 <div class="gradient-header text-center">
                     <i class="fas fa-university"></i>
-                    <h5 class="text-white mb-0">{{ college.college_name|default:user.username }}</h5>
-                    <p class="small opacity-75">College Administrator</p>
+                    <h5 class="text-white mb-0">
+                        {{ college.college_name|default:user.username }}
+                    </h5>
+                    <p class="small opacity-75 mb-0">College Administrator</p>
                 </div>
 
+                <!-- NAVIGATION -->
                 <div class="nav-container">
                     <ul class="nav nav-pills flex-column">
+
+                        <!-- Register Students -->
                         <li class="nav-item">
-                            <a class="nav-link {% if request.path == '/college/register-student/' %}active{% endif %}"
-                               href="{% url 'register_student' %}">
-                                <i class="fas fa-user-plus"></i>Register Students
+                            <a class="nav-link {% if request.resolver_match.url_name == 'register_student' %}active{% endif %}"
+                            href="{% url 'register_student' %}">
+                                <i class="fas fa-user-plus"></i>
+                                Register Students
                             </a>
                         </li>
 
+                        <!-- Create Teams -->
                         <li class="nav-item">
-                            <a class="nav-link {% if request.path == '/team/create/' %}active{% endif %}"
-                               href="{% url 'team_creation' %}">
-                                <i class="fas fa-users"></i>Create Teams
+                            <a class="nav-link {% if request.resolver_match.url_name == 'team_creation' %}active{% endif %}"
+                            href="{% url 'team_creation' %}">
+                                <i class="fas fa-users"></i>
+                                Create Teams
                             </a>
                         </li>
 
+                        <!-- Inbox -->
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'student_summary' %}">
-                                <i class="fas fa-list"></i>Student List
+                            <a class="nav-link {% if request.resolver_match.url_name == 'college_inbox' %}active{% endif %}"
+                            href="{% url 'college_inbox' %}">
+                                <i class="fas fa-comments"></i>
+                                Inbox
+
+                                {# OPTIONAL: unread badge #}
+                                {% if unread_count and unread_count > 0 %}
+                                    <span class="badge bg-danger ms-auto">
+                                        {{ unread_count }}
+                                    </span>
+                                {% endif %}
                             </a>
                         </li>
+
+                        <!-- Student List -->
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'student_summary' %}active{% endif %}"
+                            href="{% url 'student_summary' %}">
+                                <i class="fas fa-list"></i>
+                                Student List
+                            </a>
+                        </li>
+
                     </ul>
                 </div>
+
             </div>
         </div>
+
 
         <!-- Main content -->
         <div class="col-lg-9 col-md-8">

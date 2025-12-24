@@ -1,0 +1,875 @@
+{% extends "organizer/base.html" %}
+{% block title %}Participation Exports{% endblock %}
+{% block page_title %}Participation Exports{% endblock %}
+
+{% block content %}
+<div class="export-dashboard">
+
+    <!-- ================= HEADER ================= -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1 class="page-title">
+                <i class="fas fa-file-export text-primary me-2"></i>
+                Participation Reports
+            </h1>
+            <p class="page-subtitle">
+                Filter and export team-wise participation data for paperwork
+            </p>
+        </div>
+        <div class="header-stats">
+            <div class="stat-badge">
+                <span class="stat-value">{{ data|length }}</span>
+                <span class="stat-label">Records</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= FILTERS ================= -->
+    <div class="filter-section">
+        <div class="filter-card">
+            <div class="filter-header">
+                <h4><i class="fas fa-filter me-2"></i>Filter Criteria</h4>
+                <p class="text-muted mb-0">Narrow down participation</p>
+            </div>
+
+            <form method="get"
+                  action="{% url 'organizer_participation_exports' %}"
+                  class="filter-form">
+
+                <div class="filter-grid">
+
+                    <!-- Item -->
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <i class="fas fa-trophy text-warning me-1"></i>Event Item
+                        </label>
+                        <select name="item" class="filter-select">
+                            <option value="">All Items</option>
+                            {% for i in items %}
+                            <option value="{{ i.id }}"
+                                {% if selected.item == i.id|stringformat:"s" %}selected{% endif %}>
+                                {{ i.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- College -->
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <i class="fas fa-university text-primary me-1"></i>College
+                        </label>
+                        <select name="college" class="filter-select">
+                            <option value="">All Colleges</option>
+                            {% for c in colleges %}
+                            <option value="{{ c.id }}"
+                                {% if selected.college == c.id|stringformat:"s" %}selected{% endif %}>
+                                {{ c.college_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Category -->
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <i class="fas fa-tags text-success me-1"></i>Category
+                        </label>
+                        <select name="category" class="filter-select">
+                            <option value="">All Categories</option>
+                            {% for c in categories %}
+                            <option value="{{ c }}"
+                                {% if selected.category == c %}selected{% endif %}>
+                                {{ c }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="filter-group filter-actions">
+                        <button class="btn btn-primary">
+                            <i class="fas fa-filter me-1"></i>Apply
+                        </button>
+                        <a href="{% url 'organizer_participation_exports' %}"
+                           class="btn btn-outline-secondary">
+                            Reset
+                        </a>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= EXPORT ================= -->
+    <div class="export-controls">
+        <div class="export-card">
+            <div class="export-header">
+                <h4><i class="fas fa-download me-2"></i>Export Options</h4>
+            </div>
+
+            <div class="export-buttons">
+                <a href="{% url 'organizer_participation_export_excel' %}?{{ request.GET.urlencode }}"
+                   class="export-btn export-excel">
+                    <i class="fas fa-file-excel"></i> Excel
+                </a>
+
+                <a href="{% url 'organizer_participation_export_pdf' %}?{{ request.GET.urlencode }}"
+                   class="export-btn export-pdf">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= TABLE ================= -->
+    <div class="data-preview">
+        <div class="preview-card">
+
+            {% if data %}
+            <table class="preview-table">
+                <thead>
+                    <tr>
+                        <th>College</th>
+                        <th>Participants</th>
+                        <th>Item</th>
+                        <th>Category</th>
+                        <th class="text-center">Export</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                {% for row in data %}
+                <tr>
+                    <td>
+                        <strong>{{ row.college.college_name }}</strong>
+                    </td>
+
+                    <td>
+                        {% for s in row.students %}
+                            • {{ s.name }}<br>
+                        {% endfor %}
+                    </td>
+
+                    <td>
+                        {{ row.item.name }}<br>
+                        <small>{{ row.type }} Event</small>
+                    </td>
+
+                    <td>{{ row.category }}</td>
+
+                    <!-- ✅ FIXED URL HERE -->
+                    <td class="text-center">
+                        <a class="btn-action"
+                           href="{% url 'organizer_participation_export_excel' %}?item={{ row.item.id }}&college={{ row.college.id }}">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+
+                </tbody>
+            </table>
+
+            {% else %}
+            <div class="empty-state text-center p-5">
+                <i class="fas fa-search fa-2x mb-2"></i>
+                <p>No participation records found</p>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+<style>
+:root {
+    --primary-color: #4361ee;
+    --success-color: #06d6a0;
+    --danger-color: #ef476f;
+    --warning-color: #ffd166;
+    --info-color: #118ab2;
+    --light-bg: #f8f9fa;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Main Layout */
+.export-dashboard {
+    padding: 1.5rem;
+    background: #f8fafc;
+    min-height: calc(100vh - 70px);
+}
+
+/* Page Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+    color: #718096;
+    font-size: 0.95rem;
+    margin-bottom: 0;
+}
+
+.header-stats {
+    flex-shrink: 0;
+}
+
+.stat-badge {
+    background: white;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e2e8f0;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.25rem;
+}
+
+/* Filter Section */
+.filter-section {
+    margin-bottom: 2rem;
+}
+
+.filter-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.filter-header {
+    padding: 1.5rem 1.5rem 0.5rem;
+    background: linear-gradient(to right, #f8fafc, #ffffff);
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.filter-header h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.25rem;
+}
+
+.filter-form {
+    padding: 1.5rem;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-label {
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+}
+
+.select-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+.filter-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: white;
+    appearance: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    outline: none;
+}
+
+.select-arrow {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a0aec0;
+    pointer-events: none;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
+}
+
+.btn-apply, .btn-reset {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-apply:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.15);
+}
+
+/* Export Controls */
+.export-controls {
+    margin-bottom: 2rem;
+}
+
+.export-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.export-header {
+    padding: 1.5rem 1.5rem 0.5rem;
+    background: linear-gradient(to right, #f8fafc, #ffffff);
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.export-header h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.25rem;
+}
+
+.export-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    padding: 1.5rem;
+}
+
+.export-btn {
+    display: flex;
+    align-items: center;
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.export-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow-hover);
+    border-color: transparent;
+}
+
+.export-excel:hover {
+    background: linear-gradient(to right, rgba(33, 150, 83, 0.05), white);
+    border-color: #219653;
+}
+
+.export-pdf:hover {
+    background: linear-gradient(to right, rgba(239, 71, 111, 0.05), white);
+    border-color: #ef476f;
+}
+
+.export-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.export-excel .export-icon {
+    background: rgba(33, 150, 83, 0.1);
+    color: #219653;
+}
+
+.export-pdf .export-icon {
+    background: rgba(239, 71, 111, 0.1);
+    color: #ef476f;
+}
+
+.export-content {
+    flex: 1;
+}
+
+.export-content h6 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: #2d3748;
+}
+
+.export-content p {
+    font-size: 0.875rem;
+    color: #718096;
+    margin-bottom: 0.25rem;
+}
+
+.export-content small {
+    font-size: 0.75rem;
+    color: #a0aec0;
+}
+
+.export-arrow {
+    color: #cbd5e0;
+    font-size: 1.25rem;
+}
+
+.export-btn:hover .export-arrow {
+    color: var(--primary-color);
+}
+
+/* Data Preview */
+.data-preview {
+    margin-bottom: 2rem;
+}
+
+.preview-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-left h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0;
+}
+
+.record-count .badge {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+}
+
+.search-box {
+    position: relative;
+    width: 250px;
+}
+
+.search-box i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a0aec0;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.5rem 1rem 0.5rem 2.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.search-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    outline: none;
+}
+
+/* Table Styling */
+.preview-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.preview-table thead th {
+    background: #f8fafc;
+    padding: 1rem;
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.preview-table tbody tr {
+    transition: all 0.2s;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.preview-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.preview-table td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.college-cell, .student-cell, .item-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+.college-name, .student-cell strong, .item-cell strong {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.25rem;
+}
+
+.preview-table small {
+    font-size: 0.75rem;
+    color: #718096;
+}
+
+.category-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: rgba(67, 97, 238, 0.1);
+    color: var(--primary-color);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.btn-action {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #718096;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 0.25rem;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.btn-action:hover {
+    transform: translateY(-1px);
+}
+
+.btn-view:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: rgba(67, 97, 238, 0.05);
+}
+
+.btn-export:hover {
+    border-color: var(--success-color);
+    color: var(--success-color);
+    background: rgba(6, 214, 160, 0.05);
+}
+
+/* Pagination */
+.preview-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.pagination-info {
+    font-size: 0.875rem;
+    color: #718096;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.pagination-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #718096;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.pagination-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.pagination-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+/* Empty State */
+.empty-state {
+    padding: 3rem 1.5rem;
+    text-align: center;
+}
+
+.empty-icon {
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+}
+
+.empty-state h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    margin-bottom: 1.5rem;
+}
+
+.empty-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .export-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .preview-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .search-box {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .export-dashboard {
+        padding: 1rem;
+    }
+    
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .header-stats {
+        align-self: flex-start;
+    }
+    
+    .preview-table {
+        display: block;
+        overflow-x: auto;
+    }
+    
+    .empty-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 576px) {
+    .filter-actions {
+        flex-direction: column;
+    }
+    
+    .btn-apply, .btn-reset {
+        width: 100%;
+    }
+    
+    .pagination-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Search functionality for table
+    const searchInput = document.querySelector('.search-input');
+    const tableRows = document.querySelectorAll('.preview-table tbody tr');
+    
+    if (searchInput && tableRows.length > 0) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            tableRows.forEach(row => {
+                const rowText = row.textContent.toLowerCase();
+                if (rowText.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Clear all filters button
+    const clearAllFilters = document.getElementById('clearAllFilters');
+    if (clearAllFilters) {
+        clearAllFilters.addEventListener('click', function() {
+            window.location.href = "{% url 'organizer_participation_exports' %}";
+        });
+    }
+    
+    // Export button animations
+    const exportButtons = document.querySelectorAll('.export-btn');
+    exportButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            // Add loading state
+            const originalHTML = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing download...';
+            this.style.pointerEvents = 'none';
+            
+            // Reset after 2 seconds (in case download doesn't start)
+            setTimeout(() => {
+                this.innerHTML = originalHTML;
+                this.style.pointerEvents = 'auto';
+            }, 2000);
+        });
+    });
+    
+    // View and Export single record buttons
+    const viewButtons = document.querySelectorAll('.btn-view');
+    const exportSingleButtons = document.querySelectorAll('.btn-export');
+    
+    viewButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const row = this.closest('tr');
+            const studentName = row.querySelector('.student-cell strong').textContent;
+            const collegeName = row.querySelector('.college-name').textContent;
+            const itemName = row.querySelector('.item-cell strong').textContent;
+            
+            // Create a simple modal or alert with details
+            alert(`Student: ${studentName}\nCollege: ${collegeName}\nItem: ${itemName}`);
+        });
+    });
+    
+    exportSingleButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Show loading on button
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
+            // Simulate export (this is just visual - actual export is handled by the table row export)
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-download"></i>';
+                alert('Export feature for individual records would be implemented here.');
+            }, 1000);
+        });
+    });
+    
+    // Add subtle animation to table rows on load
+    tableRows.forEach((row, index) => {
+        row.style.opacity = '0';
+        row.style.transform = 'translateY(10px)';
+        
+        setTimeout(() => {
+            row.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            row.style.opacity = '1';
+            row.style.transform = 'translateY(0)';
+        }, index * 50);
+    });
+    
+    // Form validation for empty results
+    const form = document.querySelector('.filter-form');
+    const applyBtn = document.querySelector('.btn-apply');
+    
+    if (form && applyBtn) {
+        form.addEventListener('submit', function() {
+            // Show loading on apply button
+            applyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Applying...';
+            applyBtn.disabled = true;
+            
+            // Re-enable after 2 seconds in case of error
+            setTimeout(() => {
+                applyBtn.innerHTML = '<i class="fas fa-filter me-1"></i> Apply Filters';
+                applyBtn.disabled = false;
+            }, 2000);
+        });
+    }
+});
+</script>
+{% endblock %}

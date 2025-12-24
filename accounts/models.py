@@ -184,3 +184,49 @@ class Brochure(models.Model):
 
     def __str__(self):
         return self.title
+
+
+# accounts/models.py
+
+class AppealNotification(models.Model):
+    STATUS_CHOICES = (
+        ("accepted", "Accepted"),
+        ("rejected", "Rejected"),
+    )
+
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    college = models.ForeignKey(College, on_delete=models.CASCADE)
+
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
+
+    position = models.PositiveSmallIntegerField(
+        choices=Result.POSITION_CHOICES,
+        null=True,
+        blank=True
+    )
+    grade = models.CharField(
+        max_length=1,
+        choices=Result.GRADE_CHOICES,
+        null=True,
+        blank=True
+    )
+
+    message = models.TextField(blank=True)
+    result_image = models.ImageField(
+        upload_to="appeal_results/",
+        null=True,
+        blank=True
+    )
+
+    sent_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="sent_appeals"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.item.name} – {self.college.college_name} ({self.status})"
