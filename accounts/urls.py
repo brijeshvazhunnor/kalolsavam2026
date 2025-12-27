@@ -50,8 +50,6 @@ urlpatterns = [
     path("admin-panel/users/add/", views.admin_add_user, name="admin_add_user"),
     path("admin-panel/users/<int:user_id>/edit/", views.admin_edit_user, name="admin_edit_user"),
     path("admin-panel/settings/", views.admin_site_settings, name="admin_settings"),
-    path("admin-panel/brochures/", views.admin_brochures, name="admin_brochures"),
-    path("admin-panel/brochures/add/", views.admin_add_brochure, name="admin_add_brochure"),
     path("admin-panel/users/toggle/<int:user_id>/",views.admin_toggle_user,name="admin_toggle_user"),
     path("admin-panel/users/<int:user_id>/delete/",views.admin_delete_user,name="admin_delete_user"),
     #appeallll
@@ -94,4 +92,13 @@ urlpatterns = [
         views.export_result_pdf,
         name="organizer_export_result_pdf",
     ),
+    path("event-kit/", views.event_kit_home, name="event_kit_home"),
+    path("event-kit/<str:doc_type>/", views.event_kit_category, name="event_kit_category"),
+
+    # ADMIN
+    path("dashboard/event-kit/upload/", views.admin_upload_document, name="admin_upload_document"),
+    path("dashboard/event-kit/", views.admin_documents, name="admin_documents"),
+    path("dashboard/event-kit/delete/<int:pk>/", views.admin_delete_document, name="admin_delete_document"),
+
+
 ]

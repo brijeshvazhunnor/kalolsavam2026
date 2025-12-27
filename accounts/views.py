@@ -6,6 +6,24 @@ from django.conf import settings
 from django.db.models import Count, Sum, Q
 from django.utils.timezone import now
 from django.views.decorators.cache import never_cache
+from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4, landscape
+from django.http import HttpResponse
+
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font
+from openpyxl.utils import get_column_letter
+from openpyxl import Workbook
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import (SimpleDocTemplate, Table, TableStyle,Paragraph, KeepInFrame)
+
+
+from accounts.models import Result
+
+
+from accounts.models import Result
 
 from .forms import (
     LoginForm, RegisterForm, StudentForm,
@@ -14,7 +32,7 @@ from .forms import (
 from .models import (
     AppealNotification, Student, Item, Registration,
     College, Team, Result,
-    CustomUser, SiteSetting, Brochure
+    CustomUser, SiteSetting
 )
 from .utils import calculate_points
 
@@ -670,7 +688,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 
-from .models import College, SiteSetting, Brochure
+from .models import College, SiteSetting
 
 User = get_user_model()
 
@@ -807,48 +825,13 @@ def admin_site_settings(request):
     return render(request, "admin/settings.html", {"setting": setting})
 
 
-#📘 ADMIN – BROCHURES
-@login_required
-def admin_brochures(request):
-    if not admin_only(request.user):
-        return redirect("home")
-
-    brochures = Brochure.objects.all()
-    return render(request, "admin/brochures.html", {"brochures": brochures})
 
 
 
-#➕ ADMIN – ADD BROCHURE
-@login_required
-def admin_add_brochure(request):
-    if not admin_only(request.user):
-        return redirect("home")
-
-    if request.method == "POST":
-        Brochure.objects.create(
-            title=request.POST["title"],
-            image=request.FILES["image"]
-        )
-        messages.success(request, "Brochure uploaded successfully.")
-        return redirect("admin_brochures")
-
-    return render(request, "admin/add_brochure.html")
 
 
 
-#🌐 PUBLIC – BROCHURES
-def public_brochures(request):
-    brochures = Brochure.objects.filter(is_active=True)
-    return render(request, "public/brochures.html", {
-        "brochures": brochures
-    })
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, redirect, render
-from django.contrib import messages
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
 
 @login_required
 def admin_edit_user(request, user_id):
@@ -956,11 +939,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 
-from openpyxl import Workbook
-
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4   # ✅ REQUIRED
+  # ✅ REQUIRED
 
 from accounts.models import (
     Item,
@@ -1112,14 +1091,6 @@ def export_excel(request):
     return response
 
 
-
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import (
-    SimpleDocTemplate, Table, TableStyle,
-    Paragraph, KeepInFrame
-)
-from reportlab.lib import colors
 
 
 @login_required
@@ -1308,14 +1279,6 @@ def result_export_dashboard(request):
 
 
 
-from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required
-
-from openpyxl import Workbook
-from openpyxl.styles import Alignment, Font
-from openpyxl.utils import get_column_letter
-
-from accounts.models import Result
 
 
 @login_required
@@ -1420,15 +1383,7 @@ def export_result_excel(request):
 
 
 
-from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required
 
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4, landscape
-from reportlab.lib.styles import getSampleStyleSheet
-
-from accounts.models import Result
 
 
 @login_required
@@ -1530,3 +1485,88 @@ def export_result_pdf(request):
     doc.build(elements)
 
     return response
+
+#................PUBLIC DOC..............
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import PublicDocument
+
+
+# -------------------------------
+# PUBLIC PAGES
+# -------------------------------
+def event_kit_home(request):
+    return render(request, "event_kit_home.html")
+
+
+def event_kit_category(request, doc_type):
+    documents = PublicDocument.objects.filter(
+        document_type=doc_type,
+        is_active=True
+    ).order_by("-created_at")
+
+    # Process each document
+    for doc in documents:
+        filename = doc.file.name.lower()
+        doc.is_pdf = filename.endswith(".pdf")
+        
+        # Try to get file size if not available
+        if not hasattr(doc, 'size') or not doc.size:
+            try:
+                doc.size = f"{doc.file.size / 1024:.1f} KB"  # Convert bytes to KB
+            except:
+                doc.size = "Unknown"
+        
+        # Try to get upload date if not available
+        if not hasattr(doc, 'upload_date') or not doc.upload_date:
+            if hasattr(doc, 'created_at'):
+                doc.upload_date = doc.created_at.strftime("%Y-%m-%d")
+            else:
+                doc.upload_date = "Unknown"
+
+    return render(request, "event_kit_list.html", {
+        "documents": documents,
+        "doc_type": doc_type
+    })
+
+# -------------------------------
+# ADMIN MANAGEMENT
+# -------------------------------
+@login_required
+def admin_documents(request):
+    if request.user.role != "admin":
+        return redirect("home")
+
+    docs = PublicDocument.objects.all().order_by("-created_at")
+    return render(request, "admin/event_documents.html", {"docs": docs})
+
+
+@login_required
+def admin_upload_document(request):
+    if request.user.role != "admin":
+        return redirect("home")
+
+    if request.method == "POST":
+        PublicDocument.objects.create(
+            title=request.POST["title"],
+            document_type=request.POST["document_type"],
+            file=request.FILES["file"]
+        )
+        messages.success(request, "Document uploaded successfully.")
+        return redirect("admin_documents")
+
+    return render(request, "admin/upload_document.html")
+
+
+@login_required
+def admin_delete_document(request, pk):
+    if request.user.role != "admin":
+        return redirect("home")
+
+    doc = get_object_or_404(PublicDocument, pk=pk)
+    doc.delete()
+    messages.success(request, "Document deleted.")
+    return redirect("admin_documents")
+
+

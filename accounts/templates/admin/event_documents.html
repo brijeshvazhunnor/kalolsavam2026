@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Event Documents{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <h3 class="mb-4">📂 Event Documents</h3>
+
+    <a href="{% url 'admin_upload_document' %}" class="btn btn-success mb-3">
+        ➕ Upload New Document
+    </a>
+
+    <div class="row g-4">
+        {% for doc in docs %}
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6>{{ doc.title }}</h6>
+                    <p class="text-muted">{{ doc.document_type|title }}</p>
+
+                    <a href="{{ doc.file.url }}" target="_blank" class="btn btn-sm btn-primary">
+                        View
+                    </a>
+
+                    <a href="{% url 'admin_delete_document' doc.id %}"
+                       class="btn btn-sm btn-danger"
+                       onclick="return confirm('Delete this document?')">
+                        Delete
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-muted">No documents uploaded yet.</p>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

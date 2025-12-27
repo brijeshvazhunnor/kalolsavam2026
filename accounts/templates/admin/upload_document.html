@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Upload Document{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h4>Upload Event Document</h4>
+
+    <form method="POST" enctype="multipart/form-data" class="card p-4 mt-3">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label>Title</label>
+            <input type="text" name="title" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label>Type</label>
+            <select name="document_type" class="form-select">
+                <option value="brochure">Brochure</option>
+                <option value="schedule">Schedule</option>
+                <option value="blueprint">Blueprint</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label>Upload File</label>
+            <input type="file" name="file" class="form-control" required>
+        </div>
+
+        <button class="btn btn-success">Upload</button>
+    </form>
+</div>
+{% endblock %}

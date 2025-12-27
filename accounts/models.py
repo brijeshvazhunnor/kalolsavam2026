@@ -176,15 +176,6 @@ class SiteSetting(models.Model):
 # -------------------------
 # BROCHURES
 # -------------------------
-class Brochure(models.Model):
-    title = models.CharField(max_length=255)
-    image = models.ImageField(upload_to="brochures/")
-    is_active = models.BooleanField(default=True)
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.title
-
 
 # accounts/models.py
 
@@ -230,3 +221,25 @@ class AppealNotification(models.Model):
 
     def __str__(self):
         return f"{self.item.name} – {self.college.college_name} ({self.status})"
+
+
+# =============================
+# PUBLIC DOCUMENTS (BROCHURE / SCHEDULE / BLUEPRINT)
+# =============================
+
+# models.py
+class PublicDocument(models.Model):
+    DOCUMENT_TYPES = (
+        ("brochure", "Brochure"),
+        ("schedule", "Schedule"),
+        ("blueprint", "Blueprint"),
+    )
+
+    title = models.CharField(max_length=255)
+    document_type = models.CharField(max_length=20, choices=DOCUMENT_TYPES)
+    file = models.FileField(upload_to="public_documents/")
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.title} ({self.document_type})"
