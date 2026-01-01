@@ -415,236 +415,73 @@
 {% endblock %}
 
 {% block page_title_content %}
-    Student Summary
+    College Dashboard
 {% endblock %}
 
 {% block content %}
 
 <div class="container-fluid py-4 college-dashboard">
-    <div class="row">
 
-        <!-- Sidebar -->
-        <div class="col-lg-3 col-md-4 mb-4">
-            <div class="sidebar-card h-100">
-
-                <!-- HEADER -->
-                <div class="gradient-header text-center">
-                    <i class="fas fa-university"></i>
-                    <h5 class="text-white mb-0">
-                        {{ college.college_name|default:user.username }}
-                    </h5>
-                    <p class="small opacity-75 mb-0">College Administrator</p>
-                </div>
-
-                <!-- NAVIGATION -->
-                <div class="nav-container">
-                    <ul class="nav nav-pills flex-column">
-
-                        <!-- Register Students -->
-                        {% if setting.allow_student_registration %}
-                            <li class="nav-item">
-                                <a class="nav-link {% if request.resolver_match.url_name == 'register_student' %}active{% endif %}"
-                                href="{% url 'register_student' %}">
-                                    <i class="fas fa-user-plus"></i>
-                                    Register Students
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="nav-item">
-                                <a class="nav-link disabled text-muted" href="javascript:void(0);"
-                                title="Registration is currently disabled">
-                                    <i class="fas fa-lock"></i>
-                                    Register Students
-                                </a>
-                            </li>
-                        {% endif %}
-                        <!-- Create Teams -->
-                        {% if setting.allow_student_registration %}
-                            <li class="nav-item">
-                                <a class="nav-link {% if request.resolver_match.url_name == 'team_creation' %}active{% endif %}"
-                                href="{% url 'team_creation' %}">
-                                    <i class="fas fa-users"></i>
-                                    Create Teams
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="nav-item">
-                                <a class="nav-link disabled text-muted"
-                                href="javascript:void(0);"
-                                title="Team creation is currently disabled">
-                                    <i class="fas fa-lock"></i>
-                                    Create Teams
-                                </a>
-                            </li>
-                        {% endif %}
-
-                        <!-- Inbox -->
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'college_inbox' %}active{% endif %}"
-                            href="{% url 'college_inbox' %}">
-                                <i class="fas fa-comments"></i>
-                                Inbox
-
-                                {# OPTIONAL: unread badge #}
-                                {% if unread_count and unread_count > 0 %}
-                                    <span class="badge bg-danger ms-auto">
-                                        {{ unread_count }}
-                                    </span>
-                                {% endif %}
-                            </a>
-                        </li>
-
-                        <!-- Student List -->
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'student_summary' %}active{% endif %}"
-                            href="{% url 'student_summary' %}">
-                                <i class="fas fa-list"></i>
-                                Student List
-                            </a>
-                        </li>
-
-                    </ul>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- ================= MAIN CONTENT ================= -->
-        <div class="col-lg-9 col-md-8">
-
-            <div class="main-header">
-                <h4 class="mb-1">
-                    <i class="fas fa-user-graduate me-2"></i>
-                    Student Participation Overview
-                </h4>
-                <p class="text-muted mb-0">
-                    Individual & group event participation summary
-                </p>
-            </div>
-
-            <!-- FILTER -->
-            <form method="get" class="filter-card">
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-4">
-                        <label class="form-label">Search Student</label>
-                        <input type="text" name="q" value="{{ q }}" class="form-control">
-                    </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label">Category</label>
-                        <select name="category" class="form-select">
-                            <option value="">All Categories</option>
-                            {% for c in categories %}
-                                <option value="{{ c }}" {% if c == selected_category %}selected{% endif %}>
-                                    {{ c }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label">Item Type</label>
-                        <select name="item_type" class="form-select">
-                            <option value="">All</option>
-                            <option value="single" {% if selected_type == "single" %}selected{% endif %}>Single</option>
-                            <option value="group" {% if selected_type == "group" %}selected{% endif %}>Group</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-2 d-grid">
-                        <button class="btn btn-dark">
-                            <i class="fas fa-filter me-1"></i> Apply
-                        </button>
-                    </div>
-                </div>
-            </form>
-
-            <!-- TABLE -->
-            <div class="summary-card">
-                <div class="card-header">
-                    <i class="fas fa-table me-2"></i> Participation Details
-                </div>
-
-                <div class="table-responsive">
-                    <table class="table pretty-table mb-0">
-                        <thead>
-                            <tr>
-                                <th>Student</th>
-                                <th>Department</th>
-                                <th>Year</th>
-                                <th class="text-center">Single</th>
-                                <th class="text-center">Group</th>
-                                <th class="text-center">Total</th>
-                                <th>Participations</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {% for row in student_data %}
-                        <tr>
-                            <td class="fw-semibold">{{ row.student.name }}</td>
-
-                            <td>{{ row.student.department }}</td>
-
-                            <td class="text-center">
-                                Y{{ row.student.current_year }}
-                            </td>
-
-                            <td class="text-center">
-                                <span class="badge bg-primary">{{ row.single }}</span>
-                            </td>
-
-                            <td class="text-center">
-                                <span class="badge bg-warning text-dark">{{ row.group }}</span>
-                            </td>
-
-                            <td class="text-center">
-                                <span class="badge bg-success">{{ row.total }}</span>
-                            </td>
-
-                            <td>
-                                {% if row.teams %}
-                                    <ul class="mb-0 ps-3">
-                                        {% for team in row.teams %}
-                                            <li>
-                                                {{ team.item.name }}
-                                                <small class="text-muted">
-                                                    ({{ team.item.category }})
-                                                </small>
-                                            </li>
-                                        {% endfor %}
-                                    </ul>
-                                {% else %}
-                                    <span class="text-muted">No participation</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
-                                No student records found.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-
-                    </table>
-                </div>
-            </div>
-
+    <!-- HEADER -->
+    <div class="main-header mb-4">
+        <div>
+            <h4 class="mb-1">
+                <i class="fas fa-university me-2"></i>
+                Welcome, {{ college.college_name|default:user.username }}
+            </h4>
+            <p class="text-muted mb-0">
+                Manage your institution’s participation in the Kalolsavam 2026
+            </p>
         </div>
     </div>
-</div>
-{% endblock %}
 
-{% block extra_js %}
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const path = window.location.pathname;
-    document.querySelectorAll(".sidebar-card .nav-link").forEach(link => {
-        if (path.includes(link.dataset.route)) {
-            link.classList.add("active");
-        }
-    });
-});
-</script>
+    <!-- WELCOME CARD -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-card p-4">
+                <h5 class="mb-3">
+                    <i class="fas fa-handshake me-2"></i> Welcome to the College Dashboard
+                </h5>
+
+                <p class="text-muted mb-3">
+                    This dashboard allows you to manage your college’s participation in
+                    <strong>Kannur University Kalolsavam 2026</strong>. From here, you can
+                    register students, create teams, monitor event participation, and
+                    communicate with the organizing committee.
+                </p>
+
+                <ul class="mb-0">
+                    <li>✔ Register students for various competitions</li>
+                    <li>✔ Create and manage individual or group teams</li>
+                    <li>✔ Track student participation across events</li>
+                    <li>✔ Receive official updates and announcements</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- QUICK ACTION CARDS -->
+    <!-- MAIN ACTION -->
+    <div class="row justify-content-center mt-4">
+        <div class="col-lg-6">
+            <div class="dashboard-card p-5 text-center">
+
+                <i class="fas fa-list-alt fa-3x text-primary mb-3"></i>
+
+                <h4 class="mb-2">Student Participation Summary</h4>
+                <p class="text-muted mb-4">
+                    View all registered students, teams, and participation details in one place.
+                </p>
+
+                 <a href="{% url 'student_summary' %}" class="btn btn-primary btn-lg px-5">
+                    <i class="fas fa-arrow-right me-2"></i> View Summary
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
 {% endblock %}

@@ -441,22 +441,42 @@
                     <ul class="nav nav-pills flex-column">
 
                         <!-- Register Students -->
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'register_student' %}active{% endif %}"
-                            href="{% url 'register_student' %}">
-                                <i class="fas fa-user-plus"></i>
-                                Register Students
-                            </a>
-                        </li>
-
+                        {% if setting.allow_student_registration %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'register_student' %}active{% endif %}"
+                                href="{% url 'register_student' %}">
+                                    <i class="fas fa-user-plus"></i>
+                                    Register Students
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link disabled text-muted" href="javascript:void(0);"
+                                title="Registration is currently disabled">
+                                    <i class="fas fa-lock"></i>
+                                    Register Students
+                                </a>
+                            </li>
+                        {% endif %}
                         <!-- Create Teams -->
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'team_creation' %}active{% endif %}"
-                            href="{% url 'team_creation' %}">
-                                <i class="fas fa-users"></i>
-                                Create Teams
-                            </a>
-                        </li>
+                        {% if setting.allow_student_registration %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'team_creation' %}active{% endif %}"
+                                href="{% url 'team_creation' %}">
+                                    <i class="fas fa-users"></i>
+                                    Create Teams
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link disabled text-muted"
+                                href="javascript:void(0);"
+                                title="Team creation is currently disabled">
+                                    <i class="fas fa-lock"></i>
+                                    Create Teams
+                                </a>
+                            </li>
+                        {% endif %}
 
                         <!-- Inbox -->
                         <li class="nav-item">

@@ -115,15 +115,21 @@ def college_dashboard(request):
         return redirect("home")
 
     college = get_object_or_404(College, user=request.user)
+    setting = SiteSetting.objects.first()
 
+    # 🔐 If registration is CLOSED → redirect to summary
+    if not setting or not setting.allow_student_registration:
+        return redirect("student_summary")
+
+    # ✅ Otherwise allow registration dashboard
     if request.method == "POST" and "add_student" in request.POST:
         form = StudentForm(request.POST, request.FILES)
         if form.is_valid():
             student = form.save(commit=False)
             student.college = college
             student.save()
-            messages.success(request, "Student added")
-            return redirect("college_dashboard")
+            messages.success(request, "Student added successfully.")
+            return redirect("register_student")
     else:
         form = StudentForm()
 
@@ -135,8 +141,12 @@ def college_dashboard(request):
     })
 
 
+from .decorators import registration_open_required
+
+
 #🧑‍🎓 REGISTER STUDENT
 @login_required
+@registration_open_required
 def register_student(request):
     if request.user.role != "college":
         return redirect("home")
@@ -165,6 +175,7 @@ def register_student(request):
 
 #✏️ EDIT STUDENT
 @login_required
+@registration_open_required
 def edit_student(request, student_id):
     student = get_object_or_404(Student, id=student_id)
 
@@ -190,6 +201,7 @@ def edit_student(request, student_id):
 
 #👥 TEAM CREATION (FIXED)
 @login_required
+@registration_open_required
 def team_creation(request):
     if request.user.role != "college":
         return redirect("home")
@@ -233,6 +245,7 @@ def team_creation(request):
 
 #edit team
 @login_required
+@registration_open_required
 def edit_team(request, team_id):
     if request.user.role != "college":
         messages.error(request, "Only college users can edit teams.")
