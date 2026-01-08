@@ -129,7 +129,7 @@ def college_dashboard(request):
             student.college = college
             student.save()
             messages.success(request, "Student added successfully.")
-            return redirect("register_student")
+            return redirect("register_student+")
     else:
         form = StudentForm()
 
@@ -248,72 +248,69 @@ def team_creation(request):
 @registration_open_required
 def edit_team(request, team_id):
     if request.user.role != "college":
-        messages.error(request, "Only college users can edit teams.")
+        messages.error(request, "You are not authorized to perform this action.")
         return redirect("home")
 
     college = get_object_or_404(College, user=request.user)
     team = get_object_or_404(Team, id=team_id, college=college)
     item = team.item
 
-    if request.method == "POST":
-        selected_students = request.POST.getlist("edit_students")
-
-        if not selected_students:
-            messages.error(request, "A team must have at least one participant.")
-            return redirect("team_creation")
-
-        if len(selected_students) > item.max_participants:
-            messages.error(
-                request,
-                f"Maximum {item.max_participants} participants allowed for '{item.name}'."
-            )
-            return redirect("team_creation")
-
-        single_limit = 4
-        group_limit = 2
-
-        for student_id in selected_students:
-            student = Student.objects.get(id=student_id)
-
-            single_count = (
-                Team.objects.filter(
-                    college=college,
-                    students=student,
-                    item__item_type="single",
-                )
-                .exclude(id=team.id)
-                .count()
-            )
-
-            group_count = (
-                Team.objects.filter(
-                    college=college,
-                    students=student,
-                    item__item_type="group",
-                )
-                .exclude(id=team.id)
-                .count()
-            )
-
-            if item.item_type == "single" and single_count >= single_limit:
-                messages.error(
-                    request,
-                    f"{student.name} already reached {single_limit} single items."
-                )
-                return redirect("team_creation")
-
-            if item.item_type == "group" and group_count >= group_limit:
-                messages.error(
-                    request,
-                    f"{student.name} already reached {group_limit} group items."
-                )
-                return redirect("team_creation")
-
-        team.students.set(selected_students)
-        messages.success(request, f"Team '{item.name}' updated successfully.")
+    if request.method != "POST":
         return redirect("team_creation")
 
+    selected_students = request.POST.getlist("edit_students")
+
+    # ❌ No students selected
+    if not selected_students:
+        messages.error(request, "A team must have at least one participant.")
+        return redirect("team_creation")
+
+    # ❌ Exceeding allowed participants
+    if len(selected_students) > item.max_participants:
+        messages.error(
+            request,
+            f"Maximum {item.max_participants} participants allowed for '{item.name}'."
+        )
+        return redirect("team_creation")
+
+    # 🔍 Validate each student
+    for student_id in selected_students:
+        student = get_object_or_404(Student, id=student_id, college=college)
+
+        # Count existing participations excluding current team
+        single_count = Team.objects.filter(
+            college=college,
+            students=student,
+            item__item_type="single"
+        ).exclude(id=team.id).count()
+
+        group_count = Team.objects.filter(
+            college=college,
+            students=student,
+            item__item_type="group"
+        ).exclude(id=team.id).count()
+
+        # Enforce limits
+        if item.item_type == "single" and single_count >= 4:
+            messages.error(
+                request,
+                f"{student.name} has already reached the limit for single events."
+            )
+            return redirect("team_creation")
+
+        if item.item_type == "group" and group_count >= 2:
+            messages.error(
+                request,
+                f"{student.name} has already reached the limit for group events."
+            )
+            return redirect("team_creation")
+
+    # ✅ All validations passed → save
+    team.students.set(selected_students)
+    messages.success(request, f"Team '{item.name}' updated successfully.")
+
     return redirect("team_creation")
+
 
 
 
