@@ -1,42 +1,86 @@
-<!-- OVERALL LEADERBOARD -->
-<tbody id="overall-body">
-{% for c in overall_colleges %}
-<tr>
-<td>{{ forloop.counter }}</td>
-<td>{{ c.team__college__college_name }}</td>
-<td class="text-end fw-bold">{{ c.total_points }}</td>
-</tr>
-{% endfor %}
+<!-- Overall College Leaderboard Section -->
+<tbody id="overall-leaderboard">
+    {% for college in overall_colleges %}
+    <tr>
+        <td data-label="Rank">
+            <span class="badge {% if forloop.counter == 1 %}position-1{% elif forloop.counter == 2 %}position-2{% elif forloop.counter == 3 %}position-3{% else %}bg-light text-dark{% endif %}">
+                #{{ forloop.counter }}
+            </span>
+        </td>
+        <td data-label="College" class="college-name">
+            {{ college.team__college__college_name }}
+        </td>
+        <td data-label="Points">
+            <span class="points-badge">{{ college.total_points|default:0 }}</span>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="3" class="text-center py-4">No results available yet</td>
+    </tr>
+    {% endfor %}
 </tbody>
 
-<!-- TOP INDIVIDUAL -->
-<div id="individual-body">
-{% for s in individual_top %}
-<div class="list-group-item d-flex justify-content-between">
-<div>
-<strong>{{ s.team__students__name }}</strong><br>
-<small>{{ s.team__college__college_name }}</small>
-</div>
-<span class="badge bg-success">{{ s.total_points }}</span>
-</div>
-{% endfor %}
+<!-- Individual Performers Section -->
+<div class="row" id="individual-performers">
+    {% for performer in individual_top %}
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="d-flex align-items-center p-3 border rounded bg-light">
+            <div class="flex-shrink-0">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <span class="h5 mb-0">{{ forloop.counter }}</span>
+                </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+                <h6 class="mb-1 student-name">{{ performer.team__students__name }}</h6>
+                <p class="mb-0 text-muted small">{{ performer.team__college__college_name }}</p>
+            </div>
+            <div class="flex-shrink-0">
+                <span class="points-badge">{{ performer.total_points|default:0 }}</span>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-4">
+        <p class="text-muted">No individual performers yet</p>
+    </div>
+    {% endfor %}
 </div>
 
-<!-- FULL RESULTS -->
-<tbody id="full-results-body">
-{% for r in full_results %}
-<tr>
-<td>{{ r.item.name }}</td>
-<td>{{ r.item.category }}</td>
-<td>{{ r.team.college.college_name }}</td>
-<td>
-{% for s in r.team.students.all %}
-{{ s.name }}{% if not forloop.last %}, {% endif %}
-{% endfor %}
-</td>
-<td>{{ r.get_position_display }}</td>
-<td>{{ r.grade }}</td>
-<td class="fw-bold text-end">{{ r.points }}</td>
-</tr>
-{% endfor %}
+<!-- Full Results List -->
+<tbody id="full-results">
+    {% for result in full_results %}
+    <tr>
+        <td data-label="Position">
+            <span class="badge {% if result.position == 1 %}position-1{% elif result.position == 2 %}position-2{% elif result.position == 3 %}position-3{% else %}bg-light text-dark{% endif %}">
+                {{ result.get_position_display }}
+            </span>
+        </td>
+        <td data-label="Item / Event" class="item-name">{{ result.item.name }}</td>
+        <td data-label="Category">
+            <span class="badge-category">{{ result.item.category }}</span>
+        </td>
+        <td data-label="College" class="college-name">{{ result.team.college.college_name }}</td>
+        <td data-label="Participants">
+            {% for student in result.team.students.all %}
+                <span class="student-name">{{ student.name }}</span>{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </td>
+        <td data-label="Points">
+            <span class="points-badge">{{ result.points }}</span>
+        </td>
+        <td data-label="Time" class="timestamp">
+            {{ result.created_at|date:"M d, H:i" }}
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="7" class="text-center py-4">
+            <div class="text-muted">
+                <i class="fas fa-inbox fa-2x mb-3"></i>
+                <p>No results found{% if q %} for "{{ q }}"{% endif %}</p>
+            </div>
+        </td>
+    </tr>
+    {% endfor %}
 </tbody>

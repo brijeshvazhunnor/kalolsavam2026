@@ -1,995 +1,260 @@
-{% extends "base.html" %}
-{% block title %}Kalolsavam 2026 | Official Results{% endblock %}
 {% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-{% block content %}
-<div class="results-container">
+<title>Kalolsavam 2026 | Live Results</title>
 
-  <!-- HERO SECTION -->
-  <section class="hero-section">
-    <div class="container-fluid px-3 px-md-4">
-      <div class="row align-items-center g-3">
-        <div class="col-lg-8">
-          <div class="hero-content">
-            <div class="d-flex align-items-center gap-3 mb-2">
-              <div class="hero-icon-wrapper">
-                <span class="hero-icon">🏆</span>
-              </div>
-              <div>
-                <h1 class="hero-title mb-1">Kannur University Union Kalolsavam 2026</h1>
-                <p class="hero-subtitle mb-0">Live Results & Scoreboard</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-4">
-          <div class="hero-controls">
-            <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-lg-end gap-2">
-              <div class="text-light">
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                  <small class="update-time">Updated: {% now "F j, Y · g:i a" %}</small>
-                  <div class="live-badge d-inline-flex align-items-center">
-                    <span class="live-dot"></span>
-                    <small class="ms-1">LIVE</small>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- MAIN CONTENT -->
-  <main class="container-fluid px-3 px-md-4 py-4">
-    <div class="row g-4">
-      
-      <!-- LEFT COLUMN: MAIN CONTENT -->
-      <div class="col-xxl-9 col-lg-8 order-2 order-lg-1">
-        
-        <!-- OVERALL LEADERBOARD -->
-        <section class="card-section mb-4">
-          <div class="card main-card h-100">
-            <div class="card-header">
-              <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-                <h2 class="card-title mb-0">Overall College Leaderboard</h2>
-                <span class="badge rank-badge mt-1 mt-md-0">Top {{ overall_colleges|length }}</span>
-              </div>
-            </div>
-            <div class="card-body p-0">
-              <div class="table-responsive">
-                <table class="table table-leaderboard mb-0">
-                  <thead>
-                    <tr>
-                      <th width="80" class="ps-3">Rank</th>
-                      <th>College</th>
-                      <th width="140" class="text-end pe-3">Total Points</th>
-                    </tr>
-                  </thead>
-                  <tbody id="overall-body">
-                    {% for c in overall_colleges %}
-                    <tr class="{% if forloop.counter <= 3 %}highlight-row{% endif %}">
-                      <td class="ps-3">
-                        <div class="rank-cell {% if forloop.counter == 1 %}rank-gold{% elif forloop.counter == 2 %}rank-silver{% elif forloop.counter == 3 %}rank-bronze{% endif %}">
-                          {{ forloop.counter }}
-                        </div>
-                      </td>
-                      <td>
-                        <div class="college-info">
-                          <div class="college-name text-truncate" title="{{ c.team__college__college_name }}">
-                            {{ c.team__college__college_name }}
-                          </div>
-                        </div>
-                      </td>
-                      <td class="text-end pe-3">
-                        <span class="points-display">{{ c.total_points }}</span>
-                      </td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- SEARCH AND FILTER -->
-        <section class="card-section mb-4">
-          <div class="card filter-card">
-            <div class="card-body p-3 p-md-4">
-              <form method="get" class="row g-2 g-md-3">
-                <div class="col-md-5 mb-2 mb-md-0">
-                  <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0">
-                      <i class="bi bi-search"></i>
-                    </span>
-                    <input type="text" name="q" value="{{ q }}" class="form-control border-start-0"
-                           placeholder="Search item, category, college or student...">
-                  </div>
-                </div>
-                <div class="col-md-4 mb-2 mb-md-0">
-                  <select name="category" class="form-select">
-                    <option value="">All Categories</option>
-                    {% for c in categories %}
-                    <option value="{{ c }}" {% if c == selected_category %}selected{% endif %}>{{ c }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-                <div class="col-md-3">
-                  <button type="submit" class="btn btn-primary w-100">
-                    <i class="bi bi-funnel me-1"></i>Filter
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </section>
-
-        <!-- FULL RESULTS TABLE -->
-        <section class="card-section">
-          <div class="card main-card h-100">
-            <div class="card-header">
-              <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-                <h2 class="card-title mb-0">Complete Result List</h2>
-                <small class="text-muted mt-1 mt-md-0">{{ full_results|length }} results</small>
-              </div>
-            </div>
-            <div class="card-body p-0">
-              {% if full_results|length > 0 %}
-              <div class="table-responsive">
-                <table class="table table-results mb-0">
-                  <thead>
-                    <tr>
-                      <th width="180" class="ps-3">Item</th>
-                      <th width="120" class="d-none d-md-table-cell">Category</th>
-                      <th class="d-none d-lg-table-cell">College</th>
-                      <th width="150" class="d-none d-xl-table-cell">Participants</th>
-                      <th width="100">Position</th>
-                      <th width="80" class="text-center">Grade</th>
-                      <th width="100" class="text-end pe-3">Points</th>
-                    </tr>
-                  </thead>
-                  <tbody id="full-results-body">
-                    {% for r in full_results %}
-                    <tr>
-                      <td class="ps-3">
-                        <div class="item-name text-truncate" title="{{ r.item.name }}">
-                          {{ r.item.name }}
-                          <small class="text-muted d-block d-md-none">{{ r.item.category }}</small>
-                        </div>
-                      </td>
-                      <td class="d-none d-md-table-cell">
-                        <span class="category-badge">{{ r.item.category }}</span>
-                      </td>
-                      <td class="d-none d-lg-table-cell">
-                        <div class="college-name-sm text-truncate" title="{{ r.team.college.college_name }}">
-                          {{ r.team.college.college_name }}
-                        </div>
-                      </td>
-                      <td class="d-none d-xl-table-cell">
-                        <div class="students-list">
-                          {% for s in r.team.students.all|slice:":2" %}
-                          <span class="student-name">{{ s.name }}</span>{% if not forloop.last %}, {% endif %}
-                          {% endfor %}
-                          {% if r.team.students.count > 2 %}
-                          <span class="text-muted">+{{ r.team.students.count|add:"-2" }} more</span>
-                          {% endif %}
-                        </div>
-                      </td>
-                      <td>
-                        <span class="position-badge position-{{ r.position }}">
-                          {{ r.get_position_display }}
-                        </span>
-                      </td>
-                      <td class="text-center">
-                        <span class="grade-badge d-inline-flex align-items-center justify-content-center">
-                          {{ r.grade }}
-                        </span>
-                      </td>
-                      <td class="text-end pe-3">
-                        <span class="points-display">{{ r.points }}</span>
-                      </td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-              {% else %}
-              <div class="empty-state text-center py-5">
-                <i class="bi bi-inbox fs-1 text-muted mb-3"></i>
-                <p class="text-muted mb-0">No results found. Try adjusting your filters.</p>
-              </div>
-              {% endif %}
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <!-- RIGHT COLUMN: SIDEBAR -->
-      <div class="col-xxl-3 col-lg-4 order-1 order-lg-2">
-        
-        <!-- TOP PERFORMERS -->
-        <section class="card-section">
-          <div class="card sidebar-card h-100">
-            <div class="card-header">
-              <h2 class="card-title mb-0">Top Individual Performers</h2>
-            </div>
-            <div class="card-body p-0">
-              <div class="list-group list-group-flush" id="individual-body">
-                {% for s in individual_top %}
-                <div class="list-group-item">
-                  <div class="d-flex justify-content-between align-items-start">
-                    <div class="performer-info flex-grow-1 me-2">
-                      <div class="performer-name text-truncate" title="{{ s.team__students__name }}">
-                        {{ s.team__students__name }}
-                      </div>
-                      <div class="performer-college text-truncate text-muted" title="{{ s.team__college__college_name }}">
-                        {{ s.team__college__college_name }}
-                      </div>
-                    </div>
-                    <div class="performer-points flex-shrink-0">
-                      <span class="points-badge">{{ s.total_points }}</span>
-                    </div>
-                  </div>
-                </div>
-                {% endfor %}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- UPDATE INFO -->
-        <div class="update-card mt-3">
-          <div class="d-flex align-items-center text-muted">
-            <i class="bi bi-info-circle me-2"></i>
-            <small>Page auto-updates every 20 seconds</small>
-          </div>
-        </div>
-      </div>
-    </div>
-  </main>
-</div>
-
-<!-- LIVE UPDATE SCRIPT -->
-<script>
-class ResultsUpdater {
-  constructor() {
-    this.isUpdating = false;
-    this.init();
-  }
-
-  init() {
-    // Auto-refresh every 20 seconds
-    setInterval(() => this.refreshResults(), 20000);
-    
-    // Add pull-to-refresh on mobile
-    let touchStartY = 0;
-    document.addEventListener('touchstart', e => {
-      touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-    
-    document.addEventListener('touchend', e => {
-      const touchEndY = e.changedTouches[0].clientY;
-      const diff = touchStartY - touchEndY;
-      
-      if (diff > 100 && window.scrollY === 0) {
-        this.refreshResults();
-      }
-    }, { passive: true });
-  }
-
-  async refreshResults() {
-    if (this.isUpdating) return;
-    
-    this.isUpdating = true;
-    const updateIndicator = document.querySelector('.live-dot');
-    if (updateIndicator) updateIndicator.classList.add('pulsing');
-    
-    try {
-      const response = await fetch(window.location.href, {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        cache: 'no-store'
-      });
-      
-      if (!response.ok) throw new Error('Network error');
-      
-      const html = await response.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      
-      // Update each section with animation
-      await this.updateSection('overall-body', doc);
-      await this.updateSection('individual-body', doc);
-      await this.updateSection('full-results-body', doc);
-      
-      // Update timestamp
-      const timestamp = doc.querySelector('.update-time');
-      if (timestamp) {
-        document.querySelector('.update-time').innerHTML = timestamp.innerHTML;
-      }
-      
-      this.showToast('Results updated successfully');
-    } catch (error) {
-      console.error('Update failed:', error);
-      this.showToast('Update failed. Please refresh page.', 'error');
-    } finally {
-      this.isUpdating = false;
-      if (updateIndicator) updateIndicator.classList.remove('pulsing');
-    }
-  }
-
-  async updateSection(sectionId, newDoc) {
-    const newContent = newDoc.getElementById(sectionId);
-    const currentElement = document.getElementById(sectionId);
-    
-    if (newContent && currentElement) {
-      // Add update animation
-      currentElement.style.opacity = '0.7';
-      await this.sleep(300);
-      currentElement.innerHTML = newContent.innerHTML;
-      currentElement.style.opacity = '1';
-      
-      // Trigger animation for new rows
-      const newRows = currentElement.querySelectorAll('tr, .list-group-item');
-      newRows.forEach((row, index) => {
-        row.style.animationDelay = `${index * 50}ms`;
-        row.classList.add('fade-in');
-      });
-    }
-  }
-
-  showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `live-toast toast-${type}`;
-    toast.innerHTML = `
-      <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
-      ${message}
-    `;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => toast.classList.add('show'), 10);
-    setTimeout(() => {
-      toast.classList.remove('show');
-      setTimeout(() => toast.remove(), 300);
-    }, 3000);
-  }
-
-  sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-}
-
-// Initialize when page loads
-document.addEventListener('DOMContentLoaded', () => {
-  window.resultsUpdater = new ResultsUpdater();
-});
-</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-/* Base Styles */
-:root {
-  --primary-color: #961f1f;
-  --primary-dark: #7a1919;
-  --secondary-color: #c9a13b;
-  --light-bg: #f8f9fa;
-  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --card-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+body {
+    background: url("{% static 'img/bgimg.png' %}");
+    background-size: cover;
+    background-attachment: fixed;
+    font-family: 'Inter', sans-serif;
 }
 
-.results-container {
-  min-height: 100vh;
-  background: var(--light-bg);
+/* HEADER */
+.hero-header {
+    background: linear-gradient(135deg, #1a1f2b, #2c3548);
+    color: white;
+    padding: 60px 0;
+    border-bottom: 4px solid #d4af37;
+    text-align: center;
 }
 
-/* Hero Section */
-.hero-section {
-  background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
-  color: white;
-  padding: 1.5rem 0;
-  position: relative;
-  overflow: hidden;
+.hero-header h1 {
+    font-weight: 700;
+    letter-spacing: 1px;
 }
 
-.hero-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url("{% static 'img/logo.png' %}") center/contain no-repeat;
-  opacity: 0.1;
-  pointer-events: none;
+.hero-header span {
+    color: #d4af37;
 }
 
-.hero-icon-wrapper {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.hero-icon {
-  font-size: 2rem;
-  line-height: 1;
-}
-
-.hero-title {
-  font-size: clamp(1.5rem, 4vw, 2rem);
-  font-weight: 700;
-  line-height: 1.3;
-}
-
-.hero-subtitle {
-  font-size: 1rem;
-  opacity: 0.9;
-  margin-top: 0.25rem;
-}
-
-.update-time {
-  font-size: 0.875rem;
-  opacity: 0.9;
-}
-
-.live-badge {
-  font-size: 0.75rem;
-  background: rgba(255, 255, 255, 0.15);
-  padding: 4px 10px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.live-dot {
-  width: 8px;
-  height: 8px;
-  background: #4ade80;
-  border-radius: 50%;
-  display: inline-block;
-  animation: pulse 2s infinite;
-}
-
-.live-dot.pulsing {
-  animation: pulse-fast 0.5s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { 
-    opacity: 1; 
-    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
-  }
-  50% { 
-    opacity: 0.7; 
-    box-shadow: 0 0 0 4px rgba(74, 222, 128, 0);
-  }
-}
-
-@keyframes pulse-fast {
-  0%, 100% { 
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% { 
-    opacity: 0.3;
-    transform: scale(0.9);
-  }
-}
-
-/* Cards */
-.main-card, .sidebar-card, .filter-card {
-  border: none;
-  border-radius: 12px;
-  box-shadow: var(--card-shadow);
-  transition: transform 0.2s, box-shadow 0.2s;
-  overflow: hidden;
-}
-
-.main-card:hover, .sidebar-card:hover {
-  box-shadow: var(--card-shadow-hover);
-  transform: translateY(-2px);
+/* CARD */
+.result-card {
+    background: rgba(255,255,255,0.95);
+    border-radius: 14px;
+    border: 1px solid rgba(212,175,55,.3);
+    box-shadow: 0 15px 40px rgba(0,0,0,.15);
+    overflow: hidden;
+    margin-bottom: 30px;
 }
 
 .card-header {
-  background: white;
-  border-bottom: 1px solid #e9ecef;
-  padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, #1a1f2b, #2c3548);
+    color: #fff;
+    font-weight: 600;
+    padding: 18px 25px;
+    font-size: 18px;
 }
 
-.card-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--primary-dark);
+.card-header i {
+    color: #d4af37;
+}
+
+/* TABLE */
+.table thead th {
+    background: #f4f0e6;
+    font-weight: 700;
+    color: #1a1f2b;
+    border-bottom: 2px solid #d4af37;
+}
+
+.table tbody tr:hover {
+    background: rgba(212,175,55,.08);
 }
 
 .rank-badge {
-  background: var(--secondary-color);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 700;
 }
 
-/* Tables */
-.table-leaderboard, .table-results {
-  margin: 0;
+.rank-1 { background: gold; }
+.rank-2 { background: silver; }
+.rank-3 { background: #cd7f32; color: #fff; }
+
+.points {
+    background: #198754;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-weight: 600;
 }
 
-.table-leaderboard thead th,
-.table-results thead th {
-  background: #f8f9fa;
-  border-bottom: 2px solid #dee2e6;
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 0.85rem;
-  letter-spacing: 0.5px;
-  padding: 1rem 1.5rem;
-  color: #6c757d;
-  white-space: nowrap;
+/* FILTER BAR */
+.filter-bar {
+    background: rgba(255,255,255,.95);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid rgba(212,175,55,.3);
+    margin-bottom: 30px;
 }
 
-.table-leaderboard tbody td,
-.table-results tbody td {
-  padding: 1rem 1.5rem;
-  vertical-align: middle;
-  border-bottom: 1px solid #f0f0f0;
-  transition: background-color 0.2s;
-}
-
-.table-leaderboard tbody tr:hover,
-.table-results tbody tr:hover {
-  background-color: rgba(0, 0, 0, 0.02);
-}
-
-.rank-cell {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 1rem;
-  background: #f8f9fa;
-  color: #6c757d;
-  margin: 0 auto;
-}
-
-.rank-gold { 
-  background: linear-gradient(135deg, #FFD700, #FFA500); 
-  color: white; 
-  box-shadow: 0 2px 8px rgba(255, 165, 0, 0.3);
-}
-.rank-silver { 
-  background: linear-gradient(135deg, #C0C0C0, #A0A0A0); 
-  color: white; 
-  box-shadow: 0 2px 8px rgba(192, 192, 192, 0.3);
-}
-.rank-bronze { 
-  background: linear-gradient(135deg, #CD7F32, #A0522D); 
-  color: white; 
-  box-shadow: 0 2px 8px rgba(205, 127, 50, 0.3);
-}
-
-.highlight-row {
-  background: linear-gradient(90deg, rgba(150, 31, 31, 0.03), transparent);
-  position: relative;
-}
-
-.highlight-row::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: var(--secondary-color);
-}
-
-.college-name {
-  font-weight: 600;
-  color: #212529;
-  max-width: 300px;
-}
-
-.college-name-sm {
-  font-weight: 500;
-  font-size: 0.95rem;
-}
-
-.points-display {
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: var(--primary-color);
-}
-
-/* Badges */
-.category-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  background: #e9ecef;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: #495057;
-  white-space: nowrap;
-}
-
-.position-badge {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  text-align: center;
-  min-width: 70px;
-  white-space: nowrap;
-}
-
-.position-1 { 
-  background: linear-gradient(135deg, #fff3cd, #ffeaa7); 
-  color: #856404; 
-  border: 1px solid #ffeaa7;
-}
-.position-2 { 
-  background: linear-gradient(135deg, #d4edda, #c3e6cb); 
-  color: #155724; 
-  border: 1px solid #c3e6cb;
-}
-.position-3 { 
-  background: linear-gradient(135deg, #d1ecf1, #bee5eb); 
-  color: #0c5460; 
-  border: 1px solid #bee5eb;
-}
-
-.grade-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-  border-radius: 50%;
-  font-weight: 700;
-  color: var(--primary-color);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-/* Top Performers */
-.performer-info {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.performer-name {
-  font-weight: 600;
-  color: #212529;
-  margin-bottom: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.performer-college {
-  font-size: 0.85rem;
-  color: #6c757d;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.points-badge {
-  display: inline-block;
-  padding: 6px 12px;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-  color: white;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.95rem;
-  min-width: 50px;
-  text-align: center;
-}
-
-/* List Group */
-.list-group-item {
-  padding: 1.25rem 1.5rem;
-  border-color: #f0f0f0;
-  transition: background-color 0.2s, transform 0.2s;
-}
-
-.list-group-item:hover {
-  background-color: #f8f9fa;
-  transform: translateX(4px);
-}
-
-/* Form Controls */
-.input-group-text {
-  background: #f8f9fa !important;
-  border-color: #dee2e6 !important;
-}
-
-.form-select, .form-control {
-  border-color: #dee2e6;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.form-select:focus, .form-control:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 0.25rem rgba(150, 31, 31, 0.25);
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-  border: none;
-  padding: 0.625rem 1.25rem;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, var(--primary-dark), #5a1010);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(150, 31, 31, 0.3);
-}
-
-/* Toast Notification */
-.live-toast {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: white;
-  color: #212529;
-  padding: 1rem 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  z-index: 1050;
-  display: flex;
-  align-items: center;
-  font-weight: 500;
-  transform: translateY(100px);
-  opacity: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  max-width: 320px;
-}
-
-.live-toast.show {
-  transform: translateY(0);
-  opacity: 1;
-}
-
-.live-toast.toast-success {
-  border-left: 4px solid #28a745;
-}
-
-.live-toast.toast-error {
-  border-left: 4px solid #dc3545;
-}
-
-/* Fade-in Animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
-}
-
-/* Empty State */
-.empty-state {
-  background: #f8f9fa;
-  border-radius: 0 0 12px 12px;
-}
-
-/* Update Card */
-.update-card {
-  background: rgba(0, 0, 0, 0.03);
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-}
-
-/* Responsive Design */
-@media (max-width: 1199.98px) {
-  .college-name {
-    max-width: 200px;
-  }
-}
-
-@media (max-width: 991.98px) {
-  .hero-section {
-    padding: 1.25rem 0;
-  }
-  
-  .hero-icon-wrapper {
-    width: 50px;
-    height: 50px;
-  }
-  
-  .hero-icon {
-    font-size: 1.75rem;
-  }
-  
-  .hero-title {
-    font-size: 1.5rem;
-  }
-  
-  .hero-subtitle {
-    font-size: 0.9rem;
-  }
-  
-  .card-header {
-    padding: 1rem;
-  }
-  
-  .table-leaderboard thead th,
-  .table-results thead th,
-  .table-leaderboard tbody td,
-  .table-results tbody td {
-    padding: 0.875rem 1rem;
-  }
-  
-  .performer-name {
-    font-size: 0.95rem;
-  }
-  
-  .performer-college {
-    font-size: 0.8rem;
-  }
-}
-
-@media (max-width: 767.98px) {
-  .hero-section {
-    text-align: center;
-  }
-  
-  .hero-icon-wrapper {
-    margin: 0 auto 1rem;
-  }
-  
-  .hero-controls {
-    justify-content: center !important;
-    text-align: center;
-  }
-  
-  .card-title {
-    font-size: 1.1rem;
-  }
-  
-  .table-leaderboard thead th,
-  .table-results thead th,
-  .table-leaderboard tbody td,
-  .table-results tbody td {
-    padding: 0.75rem 0.875rem;
-  }
-  
-  .rank-cell {
-    width: 35px;
-    height: 35px;
-    font-size: 0.9rem;
-  }
-  
-  .list-group-item {
-    padding: 1rem;
-  }
-  
-  .btn-primary {
-    padding: 0.5rem 1rem;
-  }
-  
-  .live-toast {
-    left: 16px;
-    right: 16px;
-    max-width: none;
-    bottom: 16px;
-  }
-}
-
-@media (max-width: 575.98px) {
-  .hero-title {
-    font-size: 1.25rem;
-  }
-  
-  .hero-subtitle {
-    font-size: 0.85rem;
-  }
-  
-  .update-time {
-    font-size: 0.8rem;
-  }
-  
-  .live-badge {
-    padding: 3px 8px;
-    font-size: 0.7rem;
-  }
-  
-  .table-leaderboard tbody td:nth-child(2) {
-    max-width: 150px;
-  }
-  
-  .college-name {
-    font-size: 0.95rem;
-  }
-  
-  .points-display {
-    font-size: 1rem;
-  }
-  
-  .position-badge {
-    min-width: 60px;
-    padding: 4px 8px;
-    font-size: 0.8rem;
-  }
-  
-  .grade-badge {
-    width: 32px;
-    height: 32px;
-    font-size: 0.9rem;
-  }
-}
-
-/* Print Styles */
-@media print {
-  .hero-section, .live-badge, .filter-card, .update-card, .btn-primary {
-    display: none !important;
-  }
-  
-  .main-card, .sidebar-card {
-    box-shadow: none !important;
-    border: 1px solid #dee2e6 !important;
-    page-break-inside: avoid;
-  }
-  
-  .results-container {
-    background: white !important;
-  }
-  
-  a[href]:after {
-    content: none !important;
-  }
-}
-
-/* Ensure proper spacing for mobile */
-html {
-  font-size: 16px;
-}
-
-body {
-  overflow-x: hidden;
-}
-
-/* Fix for Bootstrap spacing */
-.row.g-4 {
-  margin-left: -0.75rem;
-  margin-right: -0.75rem;
-}
-
-.row.g-4 > [class^="col-"] {
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
-}
-
-/* Fix for table responsiveness */
-.table-responsive {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Ensure text truncation works */
-.text-truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* FOOTER */
+.footer {
+    background: #1a1f2b;
+    color: #fff;
+    padding: 40px 0;
+    border-top: 4px solid #d4af37;
 }
 </style>
-{% endblock %}
+</head>
+
+<body>
+
+<!-- ================= HEADER ================= -->
+<div class="hero-header">
+    <div class="container">
+        <h1>Kannur University Union Kalolsavam 2024-25 <span>Live Results</span></h1>
+        <p class="mb-0">Official Inter College Competition Leaderboard</p>
+    </div>
+</div>
+
+<!-- ================= MAIN ================= -->
+<div class="container py-5">
+
+    
+
+    <!-- ================= COLLEGE LEADERBOARD ================= -->
+    <div class="result-card">
+        <div class="card-header">
+            <i class="fas fa-university me-2"></i> Overall College Leaderboard
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>College</th>
+                        <th>Points</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in overall_colleges %}
+                    <tr>
+                        <td>
+                            <span class="rank-badge {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% else %}bg-light{% endif %}">
+                                #{{ forloop.counter }}
+                            </span>
+                        </td>
+                        <td><strong>{{ c.team__college__college_name }}</strong></td>
+                        <td><span class="points">{{ c.total_points|default:0 }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ================= TOP PERFORMERS ================= -->
+    <div class="result-card">
+        <div class="card-header">
+            <i class="fas fa-user-graduate me-2"></i> Top Individual Performers
+        </div>
+
+        <div class="p-4">
+            <div class="row">
+                {% for p in individual_top %}
+                <div class="col-md-4 mb-3">
+                    <div class="border rounded p-3 d-flex align-items-center">
+                        <div class="me-3">
+                            <span class="rank-badge bg-dark text-white">{{ forloop.counter }}</span>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">{{ p.team__students__name }}</h6>
+                            <small class="text-muted">{{ p.team__college__college_name }}</small>
+                        </div>
+                        <div class="ms-auto">
+                            <span class="points">{{ p.total_points }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTER -->
+    <form method="get" class="filter-bar">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Search</label>
+                <input type="text" class="form-control" name="q" value="{{ q }}" placeholder="College / Student / Item">
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Category</label>
+                <select name="category" class="form-select">
+                    <option value="">All Categories</option>
+                    {% for c in categories %}
+                        <option value="{{ c }}" {% if selected_category == c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2 d-grid">
+                <button class="btn btn-dark">
+                    <i class="fas fa-filter me-1"></i> Apply
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- ================= FULL RESULTS ================= -->
+    <div class="result-card">
+        <div class="card-header">
+            <i class="fas fa-list me-2"></i> Full Results
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Position</th>
+                        <th>Item</th>
+                        <th>Category</th>
+                        <th>College</th>
+                        <th>Participants</th>
+                        <th>Points</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in full_results %}
+                    <tr>
+                        <td>{{ r.get_position_display }}</td>
+                        <td>{{ r.item.name }}</td>
+                        <td>{{ r.item.category }}</td>
+                        <td>{{ r.team.college.college_name }}</td>
+                        <td>
+                            {% for s in r.team.students.all %}
+                                {{ s.name }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td><span class="points">{{ r.points }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer">
+    <div class="container text-center">
+        <h5>Kalolsavam 2026</h5>
+        <p class="mb-0">Official Inter College Arts Festival Results Portal</p>
+    </div>
+</footer>
+
+</body>
+</html>
